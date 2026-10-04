@@ -1,0 +1,16 @@
+GRAFICOS EXTRAIDOS DA SUA ROM (uso pessoal / projeto fechado)
+=============================================================
+
+folhas/   Uma imagem por pagina de 4 KB do CHR. Cada folha tem 16x16 tiles (128x128 px no
+          tamanho original; ampliada pela escala escolhida). Boa para olhar e planejar.
+tiles/    Cada tile 8x8 em um arquivo: tiles/pagina_PP/tile_NNNN.<ext>
+          NNNN = numero global do tile. Posicao na folha: linha = (NNNN % 256) / 16,
+          coluna = (NNNN % 256) % 16.
+hd/       Pasta para os seus tiles/sprites em alta resolucao. Use o MESMO nome e subpasta
+          de tiles/ (ex.: hd/pagina_00/tile_0007.png). O pacote de texturas HD usara isso.
+indice.csv  Lista de todos os tiles: id, pagina, linha, coluna, offset no CHR, hash,
+          se esta vazio e se e duplicado de outro tile (coluna duplicado_de).
+
+Cores: o NES guarda 2 bits por pixel (4 indices). As cores reais dependem da paleta usada
+pelo jogo em cada momento, por isso aqui os tiles saem em 4 tons fixos (use --cores para mudar).
+Uma pagina de 4 KB e so uma divisao do arquivo; o jogo troca bancos de 1 KB e 2 KB em tempo real.
