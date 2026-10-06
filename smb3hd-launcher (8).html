@@ -1,0 +1,1658 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SMB3 HD • Community Edition</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;background:#000}
+
+/* Fundo floresta + neblina */
+.bg-forest{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,rgba(0,30,20,.45) 0%,rgba(0,10,5,.55) 40%,rgba(0,0,0,.65) 100%),url("https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=2400&q=90") center/cover no-repeat;filter:saturate(1.15)}
+.bg-forest::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 45%,rgba(180,220,200,.12),transparent 70%),linear-gradient(180deg,transparent 30%,rgba(200,230,210,.18) 55%,rgba(220,240,230,.28) 100%);pointer-events:none;animation:fog 14s ease-in-out infinite alternate}
+@keyframes fog{from{opacity:.7;transform:translateY(0)}to{opacity:1;transform:translateY(-12px)}}
+
+.view{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));overflow:auto}
+.view[hidden]{display:none!important}
+
+/* Liquid Glass */
+.glass{background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.1);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%)}
+.glass-btn{display:flex;align-items:center;gap:14px;width:100%;padding:15px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.28);background:linear-gradient(145deg,rgba(255,255,255,.18),rgba(255,255,255,.05));box-shadow:0 8px 24px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.3);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%);color:#fff;font:inherit;cursor:pointer;transition:transform .15s,border-color .15s,background .15s;text-align:left}
+.glass-btn:hover{transform:translateY(-2px) scale(1.015);border-color:rgba(200,255,230,.55);background:linear-gradient(145deg,rgba(255,255,255,.28),rgba(255,255,255,.1))}
+.glass-btn:active{transform:scale(.98)}
+.glass-btn.primary{background:linear-gradient(120deg,rgba(30,190,110,.75),rgba(80,230,160,.45));border-color:rgba(255,255,255,.4)}
+.glass-btn.patreon{background:linear-gradient(120deg,rgba(255,66,77,.55),rgba(255,120,90,.35));border-color:rgba(255,180,180,.4)}
+.glass-btn .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.15);font-size:18px;flex:none}
+.glass-btn b{display:block;font-size:16px}
+.glass-btn small{display:block;font-size:12px;opacity:.75;margin-top:2px}
+
+.view#v-home{align-items:flex-start;justify-content:center;padding-left:max(24px,env(safe-area-inset-left));padding-right:16px;position:absolute}
+.view#v-home .menu-panel{position:relative;z-index:2}
+.menu-panel{width:min(380px,92vw);max-height:min(740px,92vh);border-radius:28px;padding:28px 24px 22px;display:flex;flex-direction:column;gap:12px;position:relative;z-index:2;margin-left:0;margin-right:auto}
+.menu-logo{text-align:center;margin-bottom:4px}
+.menu-logo .badge{display:inline-block;font:700 11px/1 ui-monospace,monospace;letter-spacing:.16em;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);margin-bottom:10px}
+.menu-logo h1{margin:0;font-size:clamp(32px,7vw,48px);font-weight:900;letter-spacing:-.04em;line-height:1.05;text-shadow:0 8px 30px rgba(0,0,0,.5)}
+.menu-logo h1 span{display:block;font-size:.42em;font-weight:700;letter-spacing:.04em;background:linear-gradient(100deg,#b8ffd9,#6dffb0 50%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent;margin-top:4px}
+.menu-logo p{margin:8px 0 0;font-size:13px;opacity:.7}
+.menu-btns{display:flex;flex-direction:column;gap:9px;margin-top:2px}
+.rom-box{margin-top:6px;padding:14px 16px;border-radius:16px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.15)}
+.rom-box h3{margin:0 0 4px;font-size:14px}
+.rom-box p{margin:0 0 10px;font-size:12px;opacity:.7}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:5px 11px;border-radius:99px;border:1px solid rgba(255,255,255,.25);margin-bottom:10px}
+.chip.ok{color:#7dffb0;border-color:#7dffb0}
+.chip.warn{color:#ffb86c;border-color:#ffb86c}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+.sm{padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font:inherit;cursor:pointer;backdrop-filter:blur(12px)}
+.sm:hover{background:rgba(255,255,255,.2);border-color:rgba(180,255,210,.5)}
+#msg{min-height:18px;margin-top:8px;font-size:13px;opacity:.8}
+#msg.err{color:#ff7a9a;opacity:1}
+.legal{position:absolute;bottom:max(4px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:10px;opacity:.45;padding:0 16px 2px;z-index:2;pointer-events:none;line-height:1.35}
+.patreon-corner{
+  position:fixed;z-index:20;
+  right:max(14px,env(safe-area-inset-right));
+  bottom:max(14px,env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;border-radius:999px;
+  border:1px solid rgba(255,180,180,.35);
+  background:linear-gradient(120deg,rgba(255,66,77,.55),rgba(255,120,90,.35));
+  box-shadow:0 8px 28px rgba(0,0,0,.35), inset 0 1px rgba(255,255,255,.25);
+  backdrop-filter:blur(16px);color:#fff;font:700 13px system-ui,sans-serif;
+  cursor:pointer;text-decoration:none;
+}
+.patreon-corner:hover{transform:scale(1.04);border-color:rgba(255,220,220,.55)}
+.patreon-corner span{opacity:.85;font-weight:600;font-size:11px}
+#v-game .patreon-corner{display:none}
+
+
+.panel{width:min(520px,94vw);max-height:min(780px,92vh);border-radius:24px;padding:20px 22px 18px;overflow:auto}
+.panel-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.panel-top h2{margin:0;font-size:22px;flex:1}
+.grp{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:6px 16px 12px;margin-bottom:12px}
+.grp h3{margin:12px 0 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#9dffc8}
+.orow{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid rgba(255,255,255,.12)}
+.orow:first-of-type{border-top:0}
+.lab{flex:1;min-width:0}
+.lab b{display:block;font-size:14px}
+.lab small{display:block;font-size:12px;opacity:.65;margin-top:2px}
+.seg{display:flex;border:1px solid rgba(255,255,255,.25);border-radius:11px;overflow:hidden}
+.seg button{border:0;background:transparent;color:#fff;padding:7px 12px;font:inherit;cursor:pointer}
+.seg button[aria-pressed=true]{background:rgba(40,200,120,.7)}
+.sl{display:flex;align-items:center;gap:10px}
+.sl input{width:140px;accent-color:#3ddc8a}
+.sl output{min-width:48px;text-align:right;font-variant-numeric:tabular-nums;opacity:.75}
+.sw{width:50px;height:28px;border-radius:99px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.15);position:relative;padding:0;cursor:pointer}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.sw[aria-checked=true]{background:#24c878;border-color:#7affb5}
+.sw[aria-checked=true]::after{left:25px}
+.mods-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.mods-grid{grid-template-columns:1fr}}
+.mod-card{padding:14px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18)}
+.mod-card h4{margin:0 0 4px;font-size:14px}
+.mod-card p{margin:0 0 10px;font-size:12px;opacity:.7}
+.mod-card .mod-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* Personagens — clean, sem bolinhas, com partículas */
+.char-stage{position:relative;min-height:220px;border-radius:18px;overflow:hidden;background:rgba(0,0,0,.25);margin-bottom:12px}
+.char-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.char-particles span{position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(180,255,210,.55);animation:floatUp linear infinite}
+@keyframes floatUp{0%{transform:translateY(100%) scale(.6);opacity:0}20%{opacity:.9}100%{transform:translateY(-20%) scale(1.2);opacity:0}}
+.char-display{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 16px;min-height:220px}
+.char-name{font-size:28px;font-weight:900;letter-spacing:-.02em;margin:0 0 4px;text-shadow:0 4px 20px rgba(0,0,0,.4)}
+.char-desc{font-size:13px;opacity:.7;margin:0 0 16px}
+.char-nav{display:flex;gap:10px;align-items:center}
+.char-nav button{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer;backdrop-filter:blur(12px)}
+.char-nav button:hover{background:rgba(255,255,255,.25)}
+.char-dots{display:flex;gap:6px}
+.char-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.25);transition:background .2s,transform .2s}
+.char-dots i.on{background:#7affb5;transform:scale(1.25)}
+
+.maker-form label{display:block;margin:10px 0 4px;font-size:13px;opacity:.85}
+.maker-form input,.maker-form textarea,.maker-form select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.3);color:#fff;font:inherit}
+.maker-form textarea{min-height:80px;resize:vertical}
+.maker-out{margin-top:12px;padding:12px;border-radius:12px;background:rgba(0,0,0,.35);font:12px/1.4 ui-monospace,monospace;white-space:pre-wrap;max-height:160px;overflow:auto}
+/* Compilador / desmontador */
+.compile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.compile-grid{grid-template-columns:1fr}}
+.compile-stat{padding:12px;border-radius:12px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12)}
+.compile-stat b{display:block;font-size:18px;font-weight:800}
+.compile-stat span{font-size:11px;opacity:.65}
+.chr-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;max-height:160px;overflow:auto}
+.chr-preview canvas{image-rendering:pixelated;border-radius:4px;border:1px solid rgba(255,255,255,.12);background:#111}
+.pal-strip{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}
+.pal-strip i{width:18px;height:18px;border-radius:4px;border:1px solid rgba(255,255,255,.2)}
+.compile-log{font-size:12px;opacity:.85;max-height:140px;overflow:auto;margin-top:8px}
+.compile-log div{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.mastiga{font:12px/1.45 ui-monospace,monospace;background:rgba(0,0,0,.35);border-radius:12px;padding:12px;max-height:220px;overflow:auto;white-space:pre-wrap;margin-top:8px}
+
+
+/* ===== GAME VIEW + New SMB style HUD ===== */
+#v-game{padding:0;background:#000}
+#stage{position:absolute;inset:0;display:grid;place-items:center;background:#000;overflow:hidden}
+#cv{display:block;image-rendering:pixelated}
+#cv.suave{image-rendering:auto}
+#stage.crt::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.2) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.4))}
+
+/* HUD estilo New Super Mario Bros */
+#hud{
+  position:absolute;left:0;right:0;top:0;z-index:6;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:max(10px,env(safe-area-inset-top)) 14px 0;
+  pointer-events:none;
+  font-family:ui-rounded,"Segoe UI",system-ui,sans-serif;
+}
+.hud-left,.hud-right{display:flex;flex-direction:column;gap:6px;pointer-events:auto}
+.hud-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 12px 6px 8px;border-radius:999px;
+  background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(240,245,255,.82));
+  color:#1a1a2e;font-weight:800;font-size:14px;
+  box-shadow:0 4px 14px rgba(0,0,0,.35),inset 0 1px 0 #fff;
+  border:2px solid rgba(255,255,255,.9);
+}
+.hud-pill .ico{
+  width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-size:14px;
+  background:linear-gradient(145deg,#ffe66d,#ff9f43);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+}
+.hud-pill.red .ico{background:linear-gradient(145deg,#ff6b6b,#e03131)}
+.hud-pill.blue .ico{background:linear-gradient(145deg,#74c0fc,#1c7ed6)}
+.hud-pill.life .ico{background:linear-gradient(145deg,#ff8787,#fa5252)}
+.hud-secret-btn{
+  width:40px;height:40px;border-radius:12px;
+  border:2px solid rgba(255,255,255,.7);
+  background:linear-gradient(145deg,rgba(255,215,0,.85),rgba(255,160,0,.7));
+  color:#3d2a00;font-weight:900;font-size:16px;
+  cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);
+  pointer-events:auto;
+}
+.hud-secret-btn:hover{transform:scale(1.06)}
+
+#fps{position:absolute;left:max(10px,env(safe-area-inset-left));bottom:max(8px,env(safe-area-inset-bottom));font:600 11px ui-monospace,monospace;color:#7CFC9A;text-shadow:0 1px 2px #000;z-index:6}
+#bPause{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));width:42px;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(20,10,38,.55);color:#fff;z-index:7;cursor:pointer}
+#wideBadge{position:absolute;left:50%;top:max(52px,calc(env(safe-area-inset-top) + 44px));transform:translateX(-50%);z-index:6;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(12px);color:#fff;font:700 10px ui-monospace,monospace;letter-spacing:.08em}
+
+#touchControls{position:absolute;inset:0;z-index:5;pointer-events:none;display:none}
+.touchCluster{position:absolute;bottom:max(20px,env(safe-area-inset-bottom,20px));display:flex;align-items:end;gap:12px}
+.touchCluster.left{left:max(18px,env(safe-area-inset-left,18px))}
+.touchCluster.right{right:max(18px,env(safe-area-inset-right,18px))}
+.touchBtn{width:64px;height:64px;border-radius:50%;border:1px solid rgba(255,255,255,.38);background:rgba(255,255,255,.14);box-shadow:0 10px 28px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.3);backdrop-filter:blur(18px);color:#fff;font-weight:900;font-size:18px;pointer-events:auto;touch-action:none;cursor:pointer}
+.touchBtn.small{width:48px;height:48px;font-size:12px}
+.touchBtn:active{transform:scale(.92);background:rgba(70,220,145,.55)}
+@media(pointer:coarse),(max-width:900px){#touchControls{display:block}}
+
+/* Pause menu — esquerda, fundo semi + formas geométricas animadas */
+#pause{
+  position:absolute;inset:0;z-index:10;
+  display:flex;align-items:stretch;justify-content:flex-start;
+  background:rgba(8,12,20,.55);
+}
+#pause[hidden]{display:none}
+.geo-layer{
+  position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;
+}
+.geo-layer .geo{
+  position:absolute;border:1.5px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);
+  animation:geoFloat 18s linear infinite;
+}
+.geo-layer .geo.t{width:60px;height:60px;border-radius:8px}
+.geo-layer .geo.c{width:48px;height:48px;border-radius:50%}
+.geo-layer .geo.d{width:0;height:0;border:none;background:transparent;border-left:28px solid transparent;border-right:28px solid transparent;border-bottom:48px solid rgba(255,255,255,.1)}
+@keyframes geoFloat{
+  0%{transform:translate(0,0) rotate(0deg);opacity:.35}
+  50%{opacity:.75}
+  100%{transform:translate(50px,-90px) rotate(180deg);opacity:.25}
+}
+.pause-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.pause-bg .geo{
+  position:absolute;border:1.5px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  animation:geoFloat 18s linear infinite;
+}
+.pause-bg .geo.t{width:60px;height:60px;border-radius:8px}
+.pause-bg .geo.c{width:48px;height:48px;border-radius:50%}
+.pause-bg .geo.d{width:0;height:0;border:none;background:transparent;border-left:28px solid transparent;border-right:28px solid transparent;border-bottom:48px solid rgba(255,255,255,.08)}
+
+.pause-panel{
+  position:relative;z-index:1;
+  width:min(320px,78vw);height:100%;
+  padding:max(24px,env(safe-area-inset-top)) 22px max(20px,env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:10px;
+  background:linear-gradient(160deg,rgba(20,28,40,.88),rgba(12,18,28,.82));
+  border-right:1px solid rgba(255,255,255,.15);
+  backdrop-filter:blur(20px) saturate(140%);
+  box-shadow:8px 0 40px rgba(0,0,0,.4);
+}
+.pause-panel h2{margin:0 0 8px;font-size:22px;font-weight:800}
+.pause-panel .glass-btn{border-radius:14px}
+
+/* Secret DLC menu */
+#secret{
+  position:absolute;inset:0;z-index:12;
+  display:grid;place-items:center;
+  background:rgba(5,8,15,.75);backdrop-filter:blur(10px);
+}
+#secret[hidden]{display:none}
+.secret-card{
+  width:min(360px,90vw);padding:28px 24px;border-radius:24px;text-align:center;
+  background:linear-gradient(145deg,rgba(40,20,60,.9),rgba(20,10,40,.85));
+  border:1px solid rgba(255,200,100,.35);
+  box-shadow:0 20px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.15);
+}
+.secret-card .gem{font-size:42px;margin-bottom:8px;filter:drop-shadow(0 0 12px rgba(255,200,80,.6))}
+.secret-card h2{margin:0 0 6px;font-size:22px;letter-spacing:.04em;background:linear-gradient(90deg,#ffe066,#ff9f43);-webkit-background-clip:text;background-clip:text;color:transparent}
+.secret-card p{margin:0 0 16px;font-size:13px;opacity:.75}
+.secret-card .tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px}
+.secret-card .tag{font-size:11px;padding:4px 10px;border-radius:99px;background:rgba(255,200,100,.15);border:1px solid rgba(255,200,100,.3)}
+
+table{border-collapse:collapse;width:100%;font-size:14px}
+td{padding:6px 4px;border-top:1px solid rgba(255,255,255,.12)}
+td:first-child{opacity:.65;width:42%}
+
+/* DLC / ROM Hack button — canto superior direito */
+.dlc-corner{
+  position:fixed;z-index:22;
+  top:max(14px,env(safe-area-inset-top));
+  right:max(14px,env(safe-area-inset-right));
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;border-radius:999px;
+  border:1px solid rgba(180,220,255,.4);
+  background:linear-gradient(120deg,rgba(80,140,255,.55),rgba(140,90,255,.4));
+  box-shadow:0 8px 28px rgba(0,0,0,.35), inset 0 1px rgba(255,255,255,.25);
+  backdrop-filter:blur(16px);color:#fff;font:700 13px system-ui,sans-serif;
+  cursor:pointer;
+}
+.dlc-corner:hover{transform:scale(1.04);border-color:rgba(220,240,255,.7)}
+.dlc-corner span{opacity:.85;font-weight:600;font-size:11px}
+#v-game .dlc-corner{display:none}
+
+/* Feedback acima do Patreon */
+.feedback-corner{
+  position:fixed;z-index:20;
+  right:max(14px,env(safe-area-inset-right));
+  bottom:max(64px,calc(env(safe-area-inset-bottom) + 56px));
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;border-radius:999px;
+  border:1px solid rgba(180,255,210,.35);
+  background:linear-gradient(120deg,rgba(40,180,120,.5),rgba(60,140,200,.35));
+  box-shadow:0 8px 24px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.2);
+  backdrop-filter:blur(16px);color:#fff;font:700 13px system-ui,sans-serif;
+  cursor:pointer;
+}
+.feedback-corner:hover{transform:scale(1.04)}
+#v-game .feedback-corner{display:none}
+
+/* Menu DLC customizável */
+.dlc-menu-panel{
+  width:min(380px,92vw);
+  border-radius:28px;padding:26px 22px 20px;
+  display:flex;flex-direction:column;gap:12px;
+  border:1px solid var(--dlc-border, rgba(180,200,255,.35));
+  background:linear-gradient(145deg, var(--dlc-bg1, rgba(40,60,120,.55)), var(--dlc-bg2, rgba(20,30,60,.5)));
+  box-shadow:0 20px 50px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.2);
+  backdrop-filter:blur(28px) saturate(150%);
+}
+.dlc-menu-panel h1{margin:0;font-size:clamp(26px,6vw,36px);font-weight:900;letter-spacing:-.03em}
+.dlc-menu-panel h1 span{display:block;font-size:.4em;font-weight:700;opacity:.85;letter-spacing:.06em;margin-top:4px}
+.color-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.color-row label{font-size:12px;opacity:.8;min-width:70px}
+.color-row input[type=color]{width:42px;height:32px;border:none;border-radius:8px;cursor:pointer;background:transparent}
+.modal-bg{
+  position:fixed;inset:0;z-index:40;
+  background:rgba(5,10,20,.72);backdrop-filter:blur(10px);
+  display:grid;place-items:center;padding:16px;
+}
+.modal-bg[hidden]{display:none!important}
+.modal-card{
+  width:min(400px,94vw);padding:24px 20px;border-radius:22px;
+  background:linear-gradient(145deg,rgba(30,40,70,.92),rgba(15,20,40,.9));
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+}
+.modal-card h2{margin:0 0 8px;font-size:20px}
+.modal-card p{margin:0 0 12px;font-size:13px;opacity:.75}
+.modal-card textarea,.modal-card input[type=text]{
+  width:100%;padding:10px 12px;border-radius:10px;margin-bottom:10px;
+  border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.3);color:#fff;font:inherit;
+}
+.modal-card textarea{min-height:70px;resize:vertical}
+
+</style>
+</head>
+<body>
+<div class="bg-forest" aria-hidden="true"></div>
+
+<!-- HOME -->
+<section class="view" id="v-home">
+  <div class="geo-layer" id="menuGeo" aria-hidden="true"></div>
+  <div class="menu-panel glass">
+    <div class="menu-logo">
+      <span class="badge">HD REMASTER</span>
+      <h1>SMB3 HD<span>Community Edition</span></h1>
+      <p>Team Onion · Onion Art Team</p>
+    </div>
+    <nav class="menu-btns">
+      <button class="glass-btn primary" id="bPlay"><span class="ic">▶</span><span><b id="playT">Jogar</b><small id="playS">Carregue sua ROM para começar</small></span></button>
+      <button class="glass-btn" id="bChars"><span class="ic">◇</span><span><b>Personagens</b><small>Seleção clean com partículas</small></span></button>
+      <button class="glass-btn" id="bOpt"><span class="ic">⚙</span><span><b>Opções</b><small>Widescreen, controles e mods</small></span></button>
+      <button class="glass-btn" id="bMods"><span class="ic">✦</span><span><b>Mods</b><small>Texture packs e QoL</small></span></button>
+      <button class="glass-btn" id="bCompile"><span class="ic">⬡</span><span><b>Compilador</b><small>Desmonta ROM · paleta · texturas HQ</small></span></button>
+      <button class="glass-btn" id="bCred"><span class="ic">★</span><span><b>Créditos</b><small>Controles e direitos</small></span></button>
+    </nav>
+    <div class="rom-box" id="homeRom">
+      <h3>Sua ROM</h3>
+      <p>Escolha a ROM uma vez — fica guardada só neste navegador. Depois você gerencia em Opções.</p>
+      <div class="chip" id="chip">Nenhuma ROM carregada</div>
+      <div class="row-btns">
+        <button class="sm" id="bPick">Escolher ROM</button>
+      </div>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+  <p class="legal">Super Mario Bros. 3 © Nintendo. Todos os direitos reservados.<br>Este é um projeto de fãs, educacional e sem fins lucrativos, sem vínculo oficial com a Nintendo.<br>Nenhum arquivo do jogo é distribuído — a ROM é de responsabilidade do usuário.</p>
+</section>
+
+<!-- PERSONAGENS clean -->
+<section class="view" id="v-chars" hidden>
+  <div class="panel glass">
+    <div class="panel-top"><button class="sm" id="chBack">← Voltar</button><h2>Personagens</h2></div>
+    <div class="char-stage">
+      <div class="char-particles" id="charParts"></div>
+      <div class="char-display">
+        <div class="char-name" id="charName">Mario</div>
+        <div class="char-desc" id="charDesc">Herói clássico</div>
+        <div class="char-nav">
+          <button type="button" id="chPrev" aria-label="Anterior">‹</button>
+          <div class="char-dots" id="charDots"></div>
+          <button type="button" id="chNext" aria-label="Próximo">›</button>
+        </div>
+      </div>
+    </div>
+    <div class="grp">
+      <h3>Adicionar personagem</h3>
+      <div class="maker-form">
+        <label>Nome</label><input id="newCharName" placeholder="Ex: Wario" maxlength="24">
+        <label>Descrição</label><input id="newCharDesc" placeholder="Ex: Ganancioso e amarelo" maxlength="40">
+        <div style="margin-top:12px"><button class="sm" id="bAddChar">Adicionar</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPÇÕES -->
+<section class="view" id="v-opt" hidden>
+  <div class="panel glass">
+    <div class="panel-top"><button class="sm" id="oBack">← Voltar</button><h2>Opções</h2></div>
+    <div class="grp">
+      <h3>ROM do jogo</h3>
+      <p style="margin:0 0 10px;font-size:13px;opacity:.7">Escolha, troque ou remova a ROM. Ela fica só neste navegador.</p>
+      <div class="chip" id="chipOpt">Nenhuma ROM carregada</div>
+      <div class="row-btns">
+        <button class="sm" id="bPickOpt">Escolher / trocar ROM</button>
+        <button class="sm" id="bDel" hidden>Remover</button>
+      </div>
+      <div id="msgOpt" role="status" aria-live="polite" style="min-height:18px;margin-top:8px;font-size:13px;opacity:.8"></div>
+    </div>
+    <div id="optBox"></div>
+  </div>
+</section>
+
+<!-- MODS -->
+<section class="view" id="v-mods" hidden>
+  <div class="panel glass">
+    <div class="panel-top"><button class="sm" id="mBack">← Voltar</button><h2>Mods</h2></div>
+    <div class="grp">
+      <h3>Texture Packs</h3>
+      <p style="margin:0 0 10px;font-size:13px;opacity:.7">Pacotes visuais. Ative ou desative em Opções também.</p>
+      <div class="mods-grid" id="texPacks"></div>
+    </div>
+    <div class="grp">
+      <h3>Quality of Life · Bags</h3>
+      <p style="margin:0 0 10px;font-size:13px;opacity:.7">Hacks de qualidade de vida. Moedas vermelha/azul a cada fase passada.</p>
+      <div class="mods-grid" id="qolList"></div>
+    </div>
+    <div class="grp">
+      <h3>Outros mods</h3>
+      <div class="mods-grid" id="modsList"></div>
+    </div>
+    <div class="grp">
+      <h3>Apoiar o projeto</h3>
+      <button class="glass-btn patreon" id="bPatreon2" style="margin-top:8px"><span class="ic">♥</span><span><b>Patreon</b><small>Dummy — em breve</small></span></button>
+    </div>
+    <div class="grp">
+      <h3>Compilador integrado</h3>
+      <p style="margin:0 0 10px;font-size:13px;opacity:.7">Mastiga a ROM e transforma no jogo HTML (controles + canvas). Paleta e texturas HQ.</p>
+      <button class="sm" type="button" id="bCompile2">Abrir Compilador</button>
+    </div>
+    <div class="grp">
+      <h3>Criar mod (JSON)</h3>
+      <div class="maker-form">
+        <label>Nome do mod</label><input id="modName" placeholder="Ex: Coin Bags QoL">
+        <label>Tipo</label>
+        <select id="modType">
+          <option value="texture">Texture Pack</option>
+          <option value="qol">Quality of Life</option>
+          <option value="gameplay">Gameplay</option>
+          <option value="character">Personagem</option>
+          <option value="other">Outro</option>
+        </select>
+        <label>Autor</label><input id="modAuthor" placeholder="Seu nome">
+        <label>Descrição</label><textarea id="modDesc" placeholder="O que o mod faz..."></textarea>
+        <label>Versão</label><input id="modVer" value="1.0.0" maxlength="12">
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="sm" id="bGenMod">Gerar JSON</button>
+          <button class="sm" id="bCopyMod">Copiar</button>
+          <button class="sm" id="bDlMod">Baixar .json</button>
+        </div>
+        <div class="maker-out" id="modOut" hidden></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- MENU DLC / ROM HACK (cores customizáveis) -->
+<section class="view" id="v-dlc" hidden>
+  <div class="dlc-menu-panel" id="dlcPanel">
+    <div style="text-align:center;margin-bottom:4px">
+      <span class="badge" style="display:inline-block;font:700 11px/1 ui-monospace,monospace;letter-spacing:.14em;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);margin-bottom:10px">CUSTOM DLC</span>
+      <h1 id="dlcTitle">ROM Hack<span id="dlcSubtitle">Community Edition</span></h1>
+      <p id="dlcDesc" style="margin:8px 0 0;font-size:13px;opacity:.75">Carregue um hack ou DLC .nes para jogar</p>
+    </div>
+    <nav class="menu-btns">
+      <button class="glass-btn primary" id="dlcPlay"><span class="ic">▶</span><span><b>Jogar DLC / Hack</b><small id="dlcPlayS">Nenhum hack carregado</small></span></button>
+      <button class="glass-btn" id="dlcLoad"><span class="ic">⬇</span><span><b>Carregar ROM Hack</b><small>Arquivo .nes do hack</small></span></button>
+      <button class="glass-btn" id="dlcCustom"><span class="ic">✎</span><span><b>Customização</b><small>Nome, cores e descrição</small></span></button>
+      <button class="glass-btn" id="dlcBack"><span class="ic">←</span><span><b>Voltar</b><small>Menu principal</small></span></button>
+    </nav>
+    <div class="rom-box" id="dlcRomBox">
+      <h3>Status do hack</h3>
+      <div class="chip" id="dlcChip">Nenhum ROM hack</div>
+      <div id="dlcMsg" style="min-height:18px;margin-top:8px;font-size:13px;opacity:.8"></div>
+    </div>
+  </div>
+</section>
+<input type="file" id="dlcFile" accept=".nes" hidden>
+
+<!-- Modal customização -->
+<div class="modal-bg" id="modalCustom" hidden>
+  <div class="modal-card">
+    <h2>Sua customização</h2>
+    <p>Personalize o menu do DLC / ROM Hack. Se ainda não tiver o hack, carregue depois.</p>
+    <label style="font-size:12px;opacity:.8">Nome do DLC / Hack</label>
+    <input type="text" id="cName" placeholder="Ex: Super Mario World 3" maxlength="40">
+    <label style="font-size:12px;opacity:.8">Subtítulo</label>
+    <input type="text" id="cSub" placeholder="Ex: Fan Edition" maxlength="40">
+    <label style="font-size:12px;opacity:.8">Descrição</label>
+    <textarea id="cDesc" placeholder="Sobre o hack / DLC..."></textarea>
+    <div class="color-row" style="margin:8px 0 12px">
+      <label>Cor 1</label><input type="color" id="cCol1" value="#2860c8">
+      <label>Cor 2</label><input type="color" id="cCol2" value="#5030a0">
+      <label>Borda</label><input type="color" id="cColB" value="#a0c8ff">
+    </div>
+    <div class="row-btns">
+      <button class="sm" id="cSave">Salvar</button>
+      <button class="sm" id="cLoadRom">Carregar ROM Hack</button>
+      <button class="sm" id="cClose">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal feedback -->
+<div class="modal-bg" id="modalFeedback" hidden>
+  <div class="modal-card">
+    <h2>Feedback</h2>
+    <p>Conta o que achou, bugs ou ideias. (Salvo só neste navegador por enquanto — dummy.)</p>
+    <textarea id="fbText" placeholder="Seu feedback..."></textarea>
+    <div class="row-btns">
+      <button class="sm" id="fbSend">Enviar</button>
+      <button class="sm" id="fbClose">Fechar</button>
+    </div>
+    <div id="fbMsg" style="margin-top:8px;font-size:13px;opacity:.8"></div>
+  </div>
+</div>
+
+
+<!-- COMPILADOR / DESMONTADOR -->
+<section class="view" id="v-compile" hidden>
+  <div class="panel glass" style="width:min(560px,94vw)">
+    <div class="panel-top"><button class="sm" id="coBack">← Voltar</button><h2>Compilador</h2></div>
+
+    <div class="grp">
+      <h3>Desmontar ROM</h3>
+      <p style="margin:0 0 10px;font-size:13px;opacity:.7">Mastiga a ROM: header iNES, PRG, CHR, mapper MMC3, CRC. Traduz a estrutura para o runtime HTML.</p>
+      <div class="row-btns">
+        <button class="sm" id="coUseRom">Usar ROM do launcher</button>
+        <button class="sm" id="coPick">Escolher outra .nes</button>
+      </div>
+      <input type="file" id="coFile" accept=".nes" hidden>
+      <div class="chip" id="coStatus" style="margin-top:10px">Nenhuma ROM analisada</div>
+      <div class="compile-grid" id="coStats" style="margin-top:12px" hidden>
+        <div class="compile-stat"><b id="coPrg">—</b><span>PRG (16KB banks)</span></div>
+        <div class="compile-stat"><b id="coChr">—</b><span>CHR tiles</span></div>
+        <div class="compile-stat"><b id="coMap">—</b><span>Mapper</span></div>
+        <div class="compile-stat"><b id="coCrc">—</b><span>CRC32</span></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <h3>Jogo refeito em HTML</h3>
+      <p style="margin:0 0 6px;font-size:13px;opacity:.7">A reescrita: ROM diluída = o próprio jogo em HTML, com controles traduzidos.</p>
+      <div class="mastiga" id="coMastiga">Carregue uma ROM para ver a tradução.</div>
+    </div>
+
+    <div class="grp">
+      <h3>Paleta expandida</h3>
+      <p style="margin:0 0 8px;font-size:13px;opacity:.7">NES tem 64 cores. O modo expandido enriquece a saída no canvas (saturação / luma) sem alterar a ROM.</p>
+      <div class="row-btns" style="margin-bottom:8px">
+        <button class="sm" type="button" data-pal="native" id="palNative">Nativa 64</button>
+        <button class="sm" type="button" data-pal="rich" id="palRich">Rica (+sat)</button>
+        <button class="sm" type="button" data-pal="cinema" id="palCinema">Cinema</button>
+        <button class="sm" type="button" data-pal="hq" id="palHq">HQ Soft</button>
+      </div>
+      <div class="pal-strip" id="palStrip"></div>
+    </div>
+
+    <div class="grp">
+      <h3>Texturas HQ</h3>
+      <p style="margin:0 0 8px;font-size:13px;opacity:.7">Escala dos tiles CHR no runtime: 8× nativo → 64× / 128× / 256× (nearest + filtro opcional).</p>
+      <div class="row-btns">
+        <button class="sm" type="button" data-tex="1">8× nativo</button>
+        <button class="sm" type="button" data-tex="64">64×</button>
+        <button class="sm" type="button" data-tex="128">128×</button>
+        <button class="sm" type="button" data-tex="256">256× HQ</button>
+      </div>
+      <div class="chr-preview" id="coChrPrev"></div>
+    </div>
+
+    <div class="grp">
+      <h3>Gerar pack HTML</h3>
+      <p style="margin:0 0 8px;font-size:13px;opacity:.7">Manifesto + glue de hooks (widescreen, bags, HUD, texturas, paleta). A ROM não é embutida.</p>
+      <div class="row-btns">
+        <button class="sm" id="coBuild">Compilar pack</button>
+        <button class="sm" id="coCopy">Copiar</button>
+        <button class="sm" id="coDl">Baixar JSON</button>
+        <button class="sm" id="coApply">Aplicar no launcher</button>
+        <button class="sm" id="coPlay">▶ Jogar recompilado</button>
+      </div>
+      <pre class="mastiga" id="coOut" hidden></pre>
+      <div class="compile-log" id="coLog"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CRÉDITOS -->
+<section class="view" id="v-cred" hidden>
+  <div class="panel glass">
+    <div class="panel-top"><button class="sm" id="cBack">← Voltar</button><h2>Créditos</h2></div>
+    <div class="grp">
+      <h3>Copyright</h3>
+      <p style="margin:0 0 8px;opacity:.9"><b>Super Mario Bros. 3 © Nintendo.</b> Todos os direitos reservados.</p>
+      <p style="margin:0 0 8px;opacity:.75;font-size:13px">Super Mario, Mario, Luigi, Wario, Peach e todos os elementos relacionados são marcas registradas da Nintendo.</p>
+      <p style="margin:0;opacity:.7;font-size:13px">Este projeto é feito por fãs, com fins educacionais e sem lucro. Não possui vínculo oficial com a Nintendo. Nenhum ROM ou arquivo protegido é distribuído — o usuário fornece a própria cópia legal.</p>
+    </div>
+    <div class="grp">
+      <h3>Equipe</h3>
+      <p style="margin:0 0 6px"><b>Remaster HD:</b> Team Onion</p>
+      <p style="margin:0"><b>Arte e texturas:</b> Onion Art Team</p>
+    </div>
+    <div class="grp">
+      <h3>Controles</h3>
+      <table>
+        <tr><td>Mover</td><td>Setas ou W A S D</td></tr>
+        <tr><td>Pular (A)</td><td>X, K ou Espaço</td></tr>
+        <tr><td>Correr / fogo (B)</td><td>Z ou J</td></tr>
+        <tr><td>Start</td><td>Enter</td></tr>
+        <tr><td>Select</td><td>Shift ou Backspace</td></tr>
+        <tr><td>Pausa</td><td>Esc</td></tr>
+        <tr><td>Menu secreto</td><td>Botão gem no canto</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- JOGO -->
+<section class="view" id="v-game" hidden>
+  <div id="stage">
+    <canvas id="cv" width="256" height="240"></canvas>
+
+    <!-- Secret gem still available without NewSMB HUD -->
+    <button class="hud-secret-btn" id="bSecret" title="SMB Gem Secret" style="position:absolute;right:max(58px,calc(env(safe-area-inset-right) + 52px));top:max(8px,env(safe-area-inset-top));z-index:6">◆</button>
+    <div id="wideBadge" hidden>WIDESCREEN</div>
+    <div id="fps" hidden></div>
+    <button id="bPause" aria-label="Pausar">⏸</button>
+
+    <div id="touchControls" aria-label="Controles na tela">
+      <div class="touchCluster left">
+        <button class="touchBtn" data-k="16">▲</button>
+        <button class="touchBtn" data-k="64">◀</button>
+        <button class="touchBtn" data-k="128">▶</button>
+        <button class="touchBtn" data-k="32">▼</button>
+      </div>
+      <div class="touchCluster right">
+        <button class="touchBtn small" data-k="4">SELECT</button>
+        <button class="touchBtn small" data-k="8">START</button>
+        <button class="touchBtn" data-k="2">B</button>
+        <button class="touchBtn" data-k="1">A</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause à esquerda + formas geométricas -->
+  <div id="pause" hidden>
+    <div class="pause-bg" id="pauseGeo"></div>
+    <div class="pause-panel">
+      <h2>Pausado</h2>
+      <button class="glass-btn primary" id="pR"><span class="ic">▶</span><span><b>Continuar</b></span></button>
+      <button class="glass-btn" id="pSave"><span class="ic">💾</span><span><b>Salvar jogo</b><small id="saveInfo">Slot local</small></span></button>
+      <button class="glass-btn" id="pLoad"><span class="ic">📂</span><span><b>Carregar save</b><small id="loadInfo">—</small></span></button>
+      <button class="glass-btn" id="pO"><span class="ic">⚙</span><span><b>Opções</b></span></button>
+      <button class="glass-btn" id="pBags"><span class="ic">🎒</span><span><b>Bags / Moedas</b><small id="bagsInfo">Verm: 0 · Azul: 0</small></span></button>
+      <button class="glass-btn" id="pX"><span class="ic">↺</span><span><b>Reiniciar</b></span></button>
+      <button class="glass-btn" id="pQ"><span class="ic">⌂</span><span><b>Sair pro menu</b></span></button>
+    </div>
+  </div>
+
+  <!-- SMB GEM SECRET -->
+  <div id="secret" hidden>
+    <div class="secret-card">
+      <div class="gem">◆</div>
+      <h2>SMB GEM SECRET</h2>
+      <p>DLC extra secreta — conteúdo especial da community edition.</p>
+      <div class="tags">
+        <span class="tag">DLC Extra</span>
+        <span class="tag">Secret Stage</span>
+        <span class="tag">Community</span>
+      </div>
+      <p style="font-size:12px;opacity:.6;margin-bottom:14px">Por enquanto é um menu placeholder. Em breve: fases secretas, skins e desafios.</p>
+      <button class="sm" id="secretClose">Fechar</button>
+    </div>
+  </div>
+</section>
+
+<input type="file" id="file" accept=".nes" hidden>
+<button type="button" class="dlc-corner" id="bDlcCorner">✦ DLC / ROM Hack <span>jogar</span></button>
+<button type="button" class="feedback-corner" id="bFeedback">💬 Feedback</button>
+<button type="button" class="patreon-corner" id="bPatreon" title="Patreon">♥ Patreon <span>em breve</span></button>
+
+<script>
+/* ===== Núcleo NES ===== */
+const NES_RGB='545454001E740810903000884400645C00305404003C1800202A00083A00004000003C00003C00000000000000000000989698084CC43032EC5C1EE48814B0A01464982220783C00545A00287200087C00007628006678000000000000000000ECEEEC4C9AEC787CECB062ECE454ECEC58B4EC6A64D48820A0AA0074C4004CD02038CC6C38B4CC3C3C3C000000000000ECEEECA8CCECBCBCECD4B2ECECAEECECAED4ECB4B0E4C490CCD278B4DE78A8E29098E2B4A0D6E4A0A2A0000000000000';
+const NES_PAL32=Array.from({length:64},(_,i)=>{const h=parseInt(NES_RGB.substr(i*6,6),16);return(0xFF000000|((h&255)<<16)|(h&0xFF00)|(h>>16))>>>0});
+function createNES(prg,chr,vert){
+const chrRAM=chr.length===0,chrR=chrRAM?new Uint8Array(8192):chr,nPrg=prg.length>>13,nChr=Math.max(chrR.length>>10,1);
+const ram=new Uint8Array(2048),wram=new Uint8Array(8192),vram=new Uint8Array(2048),oam=new Uint8Array(256),pal=new Uint8Array(32);
+const fb=new Uint32Array(256*240),bgc=new Uint8Array(256),pad=[0,0];
+let ctrl=0,mask=0,stat=0,oa=0,v=0,t=0,fx=0,w=0,buf=0,nmi=0,budget=0;
+const R=[0,2,4,5,6,7,0,1],pm=[0,0,0,0],cm=[0,0,0,0,0,0,0,0],NTM=[[0,1,0,1],[0,0,1,1]];
+let bsel=0,pmode=0,cinv=0,mir=vert?0:1,ilat=0,icnt=0,ireload=0,ien=0,ipend=0;
+function sync(){const last=nPrg-1,r6=R[6]%nPrg,r7=R[7]%nPrg;pm[0]=pmode?last-1:r6;pm[1]=r7;pm[2]=pmode?r6:last-1;pm[3]=last;
+const c=i=>(i%nChr)<<10,a=cinv?4:0,b=cinv?0:4;
+cm[a]=c(R[0]&~1);cm[a+1]=c(R[0]|1);cm[a+2]=c(R[1]&~1);cm[a+3]=c(R[1]|1);cm[b]=c(R[2]);cm[b+1]=c(R[3]);cm[b+2]=c(R[4]);cm[b+3]=c(R[5])}
+function mapW(a,d){const odd=a&1;if(a<0xA000){if(!odd){bsel=d&7;pmode=(d>>6)&1;cinv=(d>>7)&1}else R[bsel]=d;sync()}
+else if(a<0xC000){if(!odd)mir=d&1}else if(a<0xE000){if(!odd)ilat=d;else{icnt=0;ireload=1}}else{if(!odd){ien=0;ipend=0}else ien=1}}
+function clockIrq(){if(icnt===0||ireload){icnt=ilat;ireload=0}else icnt--;if(icnt===0&&ien)ipend=1}
+const rdp=a=>{a&=0x3FFF;if(a<0x2000)return chrR[cm[a>>10]|(a&1023)];if(a<0x3F00)return vram[(NTM[mir][(a>>10)&3]<<10)|(a&1023)];let p=a&31;if((p&19)===16)p&=15;return pal[p]};
+const wrp=(a,d)=>{a&=0x3FFF;if(a<0x2000){if(chrRAM)chrR[cm[a>>10]|(a&1023)]=d}else if(a<0x3F00)vram[(NTM[mir][(a>>10)&3]<<10)|(a&1023)]=d;else{let p=a&31;if((p&19)===16)p&=15;pal[p]=d&63}};
+function ppuR(r){if(r===2){const s=stat;stat&=0x7F;w=0;return s}if(r===4)return oam[oa];if(r===7){const a=v&0x3FFF,x=rdp(a);let o;if(a<0x3F00){o=buf;buf=x}else{o=x;buf=rdp(a-0x1000)}v=(v+((ctrl&4)?32:1))&0x7FFF;return o}return 0}
+function ppuW(r,d){if(r===0){const was=ctrl&0x80;ctrl=d;t=(t&~0xC00)|((d&3)<<10);if(!was&&(d&0x80)&&(stat&0x80))nmi=1}else if(r===1)mask=d;else if(r===3)oa=d;else if(r===4){oam[oa]=d;oa=(oa+1)&255}
+else if(r===5){if(!w){t=(t&~31)|(d>>3);fx=d&7;w=1}else{t=(t&~0x73E0)|((d&7)<<12)|((d>>3)<<5);w=0}}
+else if(r===6){if(!w){t=(t&0xFF)|((d&0x3F)<<8);w=1}else{t=(t&0x7F00)|d;v=t;w=0}}else if(r===7){wrp(v,d);v=(v+((ctrl&4)?32:1))&0x7FFF}}
+function renderLine(y){const o=y*256,bgOn=mask&8,spOn=mask&16,bd=NES_PAL32[pal[0]&63];
+bgc.fill(0);for(let i=0;i<256;i++)fb[o+i]=bd;
+if(bgOn){const cx=v&31,cy=(v>>5)&31,nt=(v>>10)&3,fy=(v>>12)&7,base=(ctrl&16)?0x1000:0;
+for(let i=0;i<33;i++){const col=(cx+i)&31,n=nt^(((cx+i)>>5)&1),na=0x2000|(n<<10),tile=rdp(na|(cy<<5)|col),at=rdp(na|0x3C0|((cy>>2)<<3)|(col>>2)),p=(at>>(((cy&2)<<1)|(col&2)))&3,pa=base|(tile<<4)|fy,lo=chrR[cm[pa>>10]|(pa&1023)],hi=chrR[cm[(pa+8)>>10]|((pa+8)&1023)];
+for(let b=0;b<8;b++){const x=i*8+b-fx;if(x<0||x>255||(x<8&&!(mask&2)))continue;const c=((lo>>(7-b))&1)|(((hi>>(7-b))&1)<<1);if(c){bgc[x]=c;fb[o+x]=NES_PAL32[pal[p*4+c]&63]}}}}
+if(spOn){const h=(ctrl&32)?16:8,sel=[];for(let s=0;s<64;s++){const row=y-(oam[s*4]+1);if(row<0||row>=h)continue;if(sel.length===8){stat|=0x20;break}sel.push(s)}
+for(let k=sel.length-1;k>=0;k--){const s=sel[k],tile=oam[s*4+1],at=oam[s*4+2],sx=oam[s*4+3];let r=y-(oam[s*4]+1);if(at&0x80)r=h-1-r;
+const pa=h===8?(((ctrl&8)?0x1000:0)|(tile<<4)|r):(((tile&1)?0x1000:0)|((tile&0xFE)<<4)|((r&8)<<1)|(r&7)),lo=chrR[cm[pa>>10]|(pa&1023)],hi=chrR[cm[(pa+8)>>10]|((pa+8)&1023)];
+for(let b=0;b<8;b++){const x=sx+b;if(x>255||(x<8&&!(mask&4)))continue;const sh=(at&0x40)?b:7-b,c=((lo>>sh)&1)|(((hi>>sh)&1)<<1);if(!c)continue;
+if(s===0&&bgc[x]&&x<255&&bgOn)stat|=0x40;if((at&0x20)&&bgc[x])continue;fb[o+x]=NES_PAL32[pal[16+(at&3)*4+c]&63]}}}}
+function nextLine(){if(v&0x7000^0x7000)v+=0x1000;else{v&=~0x7000;let y=(v&0x3E0)>>5;if(y===29){y=0;v^=0x800}else if(y===31)y=0;else y++;v=(v&~0x3E0)|(y<<5)}v=(v&~0x41F)|(t&0x41F)}
+const LEN=[10,254,20,2,40,4,80,6,160,8,60,10,14,12,26,14,12,16,24,18,48,20,96,22,192,24,72,26,16,28,32,30],NP=[4,8,16,32,64,96,128,160,202,254,380,508,762,1016,2034,4068],DUTY=[[0,1,0,0,0,0,0,0],[0,1,1,0,0,0,0,0],[0,1,1,1,1,0,0,0],[1,0,0,1,1,1,1,1]];
+const PL=[0,1].map(()=>({en:0,duty:0,halt:0,cv:0,vol:0,t:0,len:0,ph:0,es:0,ed:0,ec:0,sen:0,sper:0,sneg:0,ssh:0,srl:0,sd:0})),TR={en:0,ctl:0,lr:0,lc:0,lrf:0,t:0,len:0,ph:0,out:0},NZ={en:0,halt:0,cv:0,vol:0,mode:0,per:0,len:0,sr:1,acc:0,es:0,ed:0,ec:0};
+function apuW(a,d){if(a<0x4008){const p=PL[(a>>2)&1],r=a&3;if(r===0){p.duty=d>>6;p.halt=(d>>5)&1;p.cv=(d>>4)&1;p.vol=d&15}else if(r===1){p.sen=d>>7;p.sper=(d>>4)&7;p.sneg=(d>>3)&1;p.ssh=d&7;p.srl=1}else if(r===2)p.t=(p.t&0x700)|d;else{p.t=(p.t&255)|((d&7)<<8);if(p.en)p.len=LEN[d>>3];p.es=1;p.ph=0}}
+else if(a===0x4008){TR.ctl=d>>7;TR.lr=d&127}else if(a===0x400A)TR.t=(TR.t&0x700)|d;else if(a===0x400B){TR.t=(TR.t&255)|((d&7)<<8);if(TR.en)TR.len=LEN[d>>3];TR.lrf=1}
+else if(a===0x400C){NZ.halt=(d>>5)&1;NZ.cv=(d>>4)&1;NZ.vol=d&15}else if(a===0x400E){NZ.mode=d>>7;NZ.per=d&15}else if(a===0x400F){if(NZ.en)NZ.len=LEN[d>>3];NZ.es=1}
+else if(a===0x4015){PL[0].en=d&1;PL[1].en=(d>>1)&1;TR.en=(d>>2)&1;NZ.en=(d>>3)&1;if(!PL[0].en)PL[0].len=0;if(!PL[1].en)PL[1].len=0;if(!TR.en)TR.len=0;if(!NZ.en)NZ.len=0}}
+const env=e=>{if(e.es){e.es=0;e.ec=15;e.ed=e.vol}else if(e.ed>0)e.ed--;else{e.ed=e.vol;if(e.ec>0)e.ec--;else if(e.halt)e.ec=15}};
+function quarter(){env(PL[0]);env(PL[1]);env(NZ);if(TR.lrf)TR.lc=TR.lr;else if(TR.lc>0)TR.lc--;if(!TR.ctl)TR.lrf=0}
+function half(){for(const p of PL)if(!p.halt&&p.len>0)p.len--;if(!NZ.halt&&NZ.len>0)NZ.len--;if(!TR.ctl&&TR.len>0)TR.len--;
+PL.forEach((p,i)=>{const tg=p.t+(p.sneg?-((p.t>>p.ssh)+(i?0:1)):(p.t>>p.ssh));if(p.sd===0&&p.sen&&p.ssh>0&&p.t>=8&&tg<=0x7FF&&tg>=0)p.t=tg;if(p.sd===0||p.srl){p.sd=p.sper;p.srl=0}else p.sd--})}
+function gen(n,rate){const out=new Float32Array(n),st=1789773/rate;for(let k=0;k<n;k++){
+let s=0;for(const p of PL){if(!p.en||p.len===0||p.t<8||(!p.sneg&&p.t+(p.t>>p.ssh)>0x7FF))continue;p.ph=(p.ph+st/((p.t+1)*2))%8;if(DUTY[p.duty][p.ph|0])s+=0.00752*(p.cv?p.vol:p.ec)}
+if(TR.en&&TR.len>0&&TR.lc>0&&TR.t>=2){TR.ph=(TR.ph+st/(TR.t+1))%32;const q=TR.ph|0;TR.out=q<16?15-q:q-16}s+=0.00851*TR.out;
+NZ.acc+=st;const per=NP[NZ.per];while(NZ.acc>=per){NZ.acc-=per;const f=(NZ.sr&1)^((NZ.sr>>(NZ.mode?6:1))&1);NZ.sr=(NZ.sr>>1)|(f<<14)}
+if(NZ.en&&NZ.len>0&&!(NZ.sr&1))s+=0.00494*(NZ.cv?NZ.vol:NZ.ec);out[k]=s}return out}
+let A=0,X=0,Y=0,sp=0xFD,pc=0,C=0,Z=0,I=1,D=0,V=0,N=0,ea=0,cross=0,extra=0,strobe=0,shift=0;
+function rd(a){a&=0xFFFF;if(a<0x2000)return ram[a&0x7FF];if(a<0x4000)return ppuR(a&7);if(a>=0x8000)return prg[(pm[(a>>13)&3]<<13)|(a&0x1FFF)];if(a>=0x6000)return wram[a&0x1FFF];
+if(a===0x4016){const r=shift&1;if(!strobe)shift=(shift>>1)|0x80;else shift=pad[0];return r|0x40}if(a===0x4015)return(PL[0].len>0?1:0)|(PL[1].len>0?2:0)|(TR.len>0?4:0)|(NZ.len>0?8:0);return 0}
+function wr(a,d){a&=0xFFFF;if(a<0x2000)ram[a&0x7FF]=d;else if(a<0x4000)ppuW(a&7,d);else if(a<0x4018){if(a===0x4014){const b=d<<8;for(let i=0;i<256;i++)oam[(oa+i)&255]=rd(b+i);budget-=513}else if(a===0x4016){strobe=d&1;if(strobe)shift=pad[0]}else apuW(a,d)}else if(a>=0x8000)mapW(a,d);else if(a>=0x6000)wram[a&0x1FFF]=d}
+const nz=q=>{Z=q===0?1:0;N=(q>>7)&1;return q};
+const push=q=>{ram[0x100|sp]=q;sp=(sp-1)&255},pull=()=>{sp=(sp+1)&255;return ram[0x100|sp]};
+const getP=b=>C|(Z<<1)|(I<<2)|(D<<3)|(V<<6)|(N<<7)|0x20|b,setP=p=>{C=p&1;Z=(p>>1)&1;I=(p>>2)&1;D=(p>>3)&1;V=(p>>6)&1;N=(p>>7)&1};
+const rz=p=>rd(p)|(rd((p+1)&255)<<8),cmp=r=>{const m=rd(ea);C=r>=m?1:0;nz((r-m)&255)};
+const bra=c=>{const o=rd(pc);pc=(pc+1)&0xFFFF;if(c){const tg=(pc+((o^128)-128))&0xFFFF;extra=1+(((pc^tg)&0xFF00)?1:0);pc=tg}};
+const sh=(f)=>()=>{const m=ea<0?A:rd(ea),r=nz(f(m)&255);if(ea<0)A=r;else wr(ea,r)};
+const OPF={ADC(){const m=rd(ea),r=A+m+C;V=(~(A^m)&(A^r)&0x80)?1:0;C=r>255?1:0;A=nz(r&255)},SBC(){const m=rd(ea)^255,r=A+m+C;V=(~(A^m)&(A^r)&0x80)?1:0;C=r>255?1:0;A=nz(r&255)},
+AND(){A=nz(A&rd(ea))},ORA(){A=nz(A|rd(ea))},EOR(){A=nz(A^rd(ea))},CMP(){cmp(A)},CPX(){cmp(X)},CPY(){cmp(Y)},BIT(){const m=rd(ea);Z=(A&m)?0:1;N=m>>7;V=(m>>6)&1},
+LDA(){A=nz(rd(ea))},LDX(){X=nz(rd(ea))},LDY(){Y=nz(rd(ea))},STA(){wr(ea,A)},STX(){wr(ea,X)},STY(){wr(ea,Y)},
+TAX(){X=nz(A)},TAY(){Y=nz(A)},TXA(){A=nz(X)},TYA(){A=nz(Y)},TSX(){X=nz(sp)},TXS(){sp=X},INX(){X=nz((X+1)&255)},INY(){Y=nz((Y+1)&255)},DEX(){X=nz((X-1)&255)},DEY(){Y=nz((Y-1)&255)},
+INC(){wr(ea,nz((rd(ea)+1)&255))},DEC(){wr(ea,nz((rd(ea)-1)&255))},
+ASL:sh(m=>{C=m>>7;return m<<1}),LSR:sh(m=>{C=m&1;return m>>1}),ROL:sh(m=>{const c=C;C=m>>7;return(m<<1)|c}),ROR:sh(m=>{const c=C;C=m&1;return(m>>1)|(c<<7)}),
+JMP(){pc=ea},JSR(){const r=(pc-1)&0xFFFF;push(r>>8);push(r&255);pc=ea},RTS(){const l=pull(),h=pull();pc=((h<<8|l)+1)&0xFFFF},RTI(){setP(pull());const l=pull(),h=pull();pc=h<<8|l},
+BRK(){pc=(pc+1)&0xFFFF;push(pc>>8);push(pc&255);push(getP(0x10));I=1;pc=rd(0xFFFE)|(rd(0xFFFF)<<8)},PHA(){push(A)},PLA(){A=nz(pull())},PHP(){push(getP(0x10))},PLP(){setP(pull())},
+CLC(){C=0},SEC(){C=1},CLI(){I=0},SEI(){I=1},CLD(){D=0},SED(){D=1},CLV(){V=0},NOP(){},
+BCC(){bra(!C)},BCS(){bra(C)},BEQ(){bra(Z)},BNE(){bra(!Z)},BMI(){bra(N)},BPL(){bra(!N)},BVS(){bra(V)},BVC(){bra(!V)}};
+const MODES={'#'(){ea=pc;pc=(pc+1)&0xFFFF},z(){ea=rd(pc);pc=(pc+1)&0xFFFF},zx(){ea=(rd(pc)+X)&255;pc=(pc+1)&0xFFFF},zy(){ea=(rd(pc)+Y)&255;pc=(pc+1)&0xFFFF},a(){ea=rd(pc)|(rd(pc+1)<<8);pc=(pc+2)&0xFFFF},
+ax(){const b=rd(pc)|(rd(pc+1)<<8);pc=(pc+2)&0xFFFF;ea=(b+X)&0xFFFF;cross=(b^ea)&0xFF00},ay(){const b=rd(pc)|(rd(pc+1)<<8);pc=(pc+2)&0xFFFF;ea=(b+Y)&0xFFFF;cross=(b^ea)&0xFF00},
+n(){const p=rd(pc)|(rd(pc+1)<<8);pc=(pc+2)&0xFFFF;ea=rd(p)|(rd((p&0xFF00)|((p+1)&255))<<8)},ix(){const p=(rd(pc)+X)&255;pc=(pc+1)&0xFFFF;ea=rz(p)},
+iy(){const p=rd(pc);pc=(pc+1)&0xFFFF;const b=rz(p);ea=(b+Y)&0xFFFF;cross=(b^ea)&0xFF00},r(){},i(){},A(){ea=-1}};
+const FN=new Array(256).fill(null),MF=new Array(256).fill(null),PX=new Uint8Array(256),CY=new Uint8Array(256);
+const CYC='7600035032200460250004602400047066003350422044602500046024000470660003503220346025000460240004706600035042205460250004602400047006003330202044402600444025200500262033302220444025004440242044402600335022204460250004602400047026003350222044602500046024000470';
+for(let i=0;i<256;i++)CY[i]=+CYC[i];
+'ADC:69#,65z,75zx,6Da,7Dax,79ay,61ix,71iy;AND:29#,25z,35zx,2Da,3Dax,39ay,21ix,31iy;ASL:0AA,06z,16zx,0Ea,1Eax;BCC:90r;BCS:B0r;BEQ:F0r;BIT:24z,2Ca;BMI:30r;BNE:D0r;BPL:10r;BRK:00i;BVC:50r;BVS:70r;CLC:18i;CLD:D8i;CLI:58i;CLV:B8i;CMP:C9#,C5z,D5zx,CDa,DDax,D9ay,C1ix,D1iy;CPX:E0#,E4z,ECa;CPY:C0#,C4z,CCa;DEC:C6z,D6zx,CEa,DEax;DEX:CAi;DEY:88i;EOR:49#,45z,55zx,4Da,5Dax,59ay,41ix,51iy;INC:E6z,F6zx,EEa,FEax;INX:E8i;INY:C8i;JMP:4Ca,6Cn;JSR:20a;LDA:A9#,A5z,B5zx,ADa,BDax,B9ay,A1ix,B1iy;LDX:A2#,A6z,B6zy,AEa,BEay;LDY:A0#,A4z,B4zx,ACa,BCax;LSR:4AA,46z,56zx,4Ea,5Eax;NOP:EAi;ORA:09#,05z,15zx,0Da,1Dax,19ay,01ix,11iy;PHA:48i;PHP:08i;PLA:68i;PLP:28i;ROL:2AA,26z,36zx,2Ea,3Eax;ROR:6AA,66z,76zx,6Ea,7Eax;RTI:40i;RTS:60i;SBC:E9#,E5z,F5zx,EDa,FDax,F9ay,E1ix,F1iy;SEC:38i;SED:F8i;SEI:78i;STA:85z,95zx,8Da,9Dax,99ay,81ix,91iy;STX:86z,96zy,8Ea;STY:84z,94zx,8Ca;TAX:AAi;TAY:A8i;TSX:BAi;TXA:8Ai;TXS:9Ai;TYA:98i'
+.split(';').forEach(g=>{const[m,l]=g.split(':');l.split(',').forEach(tk=>{const op=parseInt(tk.slice(0,2),16),md=tk.slice(2);FN[op]=OPF[m];MF[op]=MODES[md];PX[op]=('ADC AND CMP EOR LDA LDX LDY ORA SBC'.indexOf(m)>=0&&(md==='ax'||md==='ay'||md==='iy'))?1:0})});
+function intr(vec){push(pc>>8);push(pc&255);push(getP(0));I=1;pc=rd(vec)|(rd(vec+1)<<8);return 7}
+function step(){if(nmi){nmi=0;return intr(0xFFFA)}if(ipend&&!I)return intr(0xFFFE);const op=rd(pc);pc=(pc+1)&0xFFFF;const f=FN[op];if(!f)return 2;cross=0;extra=0;MF[op]();f();return CY[op]+extra+((cross&&PX[op])?1:0)}
+const run=n=>{budget+=n;while(budget>0)budget-=step()};
+function frame(){for(let i=0;i<4;i++){quarter();if(i&1)half()}
+for(let sl=0;sl<262;sl++){const vis=sl<240;
+if(sl===241){stat|=0x80;if(ctrl&0x80)nmi=1}if(sl===261)stat&=0x1F;
+run(87);if((vis||sl===261)&&(mask&0x18))clockIrq();run(26.667);
+if(vis)renderLine(sl);if((vis||sl===261)&&(mask&0x18)){if(sl===261)v=(v&~0x7BE0)|(t&0x7BE0);else nextLine()}}}
+function reset(){pc=rd(0xFFFC)|(rd(0xFFFD)<<8);sp=0xFD;I=1}
+sync();reset();
+function getState(){
+  return {
+    ram:Array.from(ram), wram:Array.from(wram), vram:Array.from(vram),
+    oam:Array.from(oam), pal:Array.from(pal),
+    A,X,Y,sp,pc,C,Z,I,D,V,N, ctrl,mask,stat,oa,v,t,fx,w,buf,nmi,budget,
+    R:R.slice(), pm:pm.slice(), cm:cm.slice(),
+    bsel,pmode,cinv,mir,ilat,icnt,ireload,ien,ipend
+  };
+}
+function setState(s){
+  if(!s) return;
+  ram.set(s.ram); wram.set(s.wram); vram.set(s.vram); oam.set(s.oam); pal.set(s.pal);
+  A=s.A;X=s.X;Y=s.Y;sp=s.sp;pc=s.pc;C=s.C;Z=s.Z;I=s.I;D=s.D;V=s.V;N=s.N;
+  ctrl=s.ctrl;mask=s.mask;stat=s.stat;oa=s.oa;v=s.v;t=s.t;fx=s.fx;w=s.w;buf=s.buf;nmi=s.nmi;budget=s.budget;
+  for(let i=0;i<8;i++) R[i]=s.R[i];
+  for(let i=0;i<4;i++) pm[i]=s.pm[i];
+  for(let i=0;i<8;i++) cm[i]=s.cm[i];
+  bsel=s.bsel;pmode=s.pmode;cinv=s.cinv;mir=s.mir;ilat=s.ilat;icnt=s.icnt;ireload=s.ireload;ien=s.ien;ipend=s.ipend;
+}
+return{frame,fb,pad,gen,reset,getState,setState};
+}
+
+const $=s=>document.querySelector(s);
+const KNOWN=0x2E6301ED;
+const CT=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c>>>0}return t})();
+const crc32=(d,p=0)=>{let c=(~p)>>>0;for(let i=0;i<d.length;i++)c=CT[(c^d[i])&255]^(c>>>8);return(~c)>>>0};
+function parseRom(buf){
+  const f=new Uint8Array(buf);
+  if(f.length<16||f[0]!=78||f[1]!=69||f[2]!=83||f[3]!=26) throw Error('Isso não parece uma ROM .nes.');
+  const tr=f[6]&4?512:0,p=f[4]*16384,c=f[5]*8192;
+  if(f.length<16+tr+p+c) throw Error('ROM incompleta.');
+  const mapper=(f[6]>>4)|(f[7]&240);
+  const prg=f.slice(16+tr,16+tr+p),chr=f.slice(16+tr+p,16+tr+p+c);
+  const isHack = mapper!==4 || crc32(chr,crc32(prg))!==KNOWN;
+  /* MMC3 core: mapper 4 nativo. Outros mappers = ROM hack / DLC — tenta rodar mesmo assim */
+  return{prg,chr,vert:!!(f[6]&1),crc:crc32(chr,crc32(prg)),mapper,prgBanks:f[4],chrBanks:f[5],isHack,trainer:tr};
+}
+
+const DEFAULTS={filtro:'nitido',tamanho:'ajustar',brilho:100,volume:80,fps:false,widescreen:false,modsEnabled:true,controller:'ps4',character:'mario',bagsOn:true,palette:'native',texScale:1,padMap:{a:0,b:1,select:8,start:9,up:12,down:13,left:14,right:15}};
+let S={}; try{S=JSON.parse(localStorage.getItem('smb3hd')||'{}')}catch(e){}
+for(const k in DEFAULTS) if(S[k]===undefined) S[k]=DEFAULTS[k];
+if(!S.padMap||typeof S.padMap!=='object') S.padMap=Object.assign({},DEFAULTS.padMap);
+
+const saveS=()=>{try{localStorage.setItem('smb3hd',JSON.stringify(S))}catch(e){}};
+
+/* Bags / moedas QoL */
+let bags={red:0,blue:0,stages:0};
+try{const b=JSON.parse(localStorage.getItem('smb3hd_bags')||'null');if(b) bags=b}catch(e){}
+function saveBags(){try{localStorage.setItem('smb3hd_bags',JSON.stringify(bags))}catch(e){}}
+function updateHudBags(){
+  const hr=$('#hudRed'), hb=$('#hudBlue');
+  if(hr) hr.textContent=bags.red;
+  if(hb) hb.textContent=bags.blue;
+  const bi=$('#bagsInfo'); if(bi) bi.textContent=`Verm: ${bags.red} · Azul: ${bags.blue}`;
+}
+function grantStageCoins(){
+  if(!S.modsEnabled||!S.bagsOn) return;
+  bags.red+=1; bags.blue+=1; bags.stages+=1;
+  saveBags(); updateHudBags();
+}
+
+/* Personagens clean */
+let characters=[
+  {id:'mario',name:'Mario',desc:'Herói clássico'},
+  {id:'luigi',name:'Luigi',desc:'Irmão mais alto'},
+  {id:'wario',name:'Wario',desc:'Ganancioso e amarelo'},
+  {id:'peach',name:'Peach',desc:'Princesa do Reino'},
+];
+try{const extra=JSON.parse(localStorage.getItem('smb3hd_chars')||'[]');if(Array.isArray(extra)) characters=characters.concat(extra)}catch(e){}
+let charIdx=Math.max(0,characters.findIndex(c=>c.id===S.character));
+function saveChars(){const base=new Set(['mario','luigi','wario','peach']);try{localStorage.setItem('smb3hd_chars',JSON.stringify(characters.filter(c=>!base.has(c.id))))}catch(e){}}
+
+function spawnParticles(){
+  const box=$('#charParts'); if(!box) return;
+  box.innerHTML='';
+  for(let i=0;i<18;i++){
+    const s=document.createElement('span');
+    s.style.left=(Math.random()*100)+'%';
+    s.style.animationDuration=(4+Math.random()*6)+'s';
+    s.style.animationDelay=(Math.random()*4)+'s';
+    s.style.width=s.style.height=(2+Math.random()*4)+'px';
+    s.style.opacity=0.3+Math.random()*0.5;
+    box.appendChild(s);
+  }
+}
+function renderChar(){
+  const ch=characters[charIdx]||characters[0];
+  S.character=ch.id; saveS();
+  $('#charName').textContent=ch.name;
+  $('#charDesc').textContent=ch.desc||'';
+  const dots=$('#charDots'); dots.innerHTML='';
+  characters.forEach((_,i)=>{
+    const d=document.createElement('i');
+    if(i===charIdx) d.className='on';
+    dots.appendChild(d);
+  });
+  spawnParticles();
+}
+$('#chPrev').onclick=()=>{charIdx=(charIdx-1+characters.length)%characters.length;renderChar()};
+$('#chNext').onclick=()=>{charIdx=(charIdx+1)%characters.length;renderChar()};
+$('#bAddChar').onclick=()=>{
+  const name=$('#newCharName').value.trim();
+  const desc=$('#newCharDesc').value.trim()||'Custom';
+  if(!name){alert('Coloca um nome');return}
+  const id='c_'+Date.now().toString(36);
+  characters.push({id,name,desc});
+  saveChars(); charIdx=characters.length-1; renderChar();
+  $('#newCharName').value='';$('#newCharDesc').value='';
+};
+
+/* Mods */
+const MODS=[
+  {id:'tex_tropical',name:'Tropical Overhaul',type:'texture',desc:'Floresta e névoa · 64×/128×',enabled:false,res:128},
+  {id:'tex_crt',name:'CRT Remix',type:'texture',desc:'Visual de TV antiga · 64×',enabled:false,res:64},
+  {id:'tex_clean',name:'Clean HD',type:'texture',desc:'Texturas limpas · 128×',enabled:true,res:128},
+  {id:'tex_64',name:'Classic 64× Pack',type:'texture',desc:'Texturas em 64×64',enabled:false,res:64},
+  {id:'tex_128',name:'HD 128× Pack',type:'texture',desc:'Texturas em 128×128',enabled:false,res:128},
+  {id:'qol_bags',name:'Coin Bags',type:'qol',desc:'+1 vermelha e +1 azul por fase',enabled:true},
+  {id:'gp_widescreen',name:'Widescreen HD',type:'gameplay',desc:'Escala sem esticar',enabled:false},
+  {id:'gp_controller',name:'Controller Pack',type:'gameplay',desc:'PS4 / Xbox / mapeamento',enabled:true},
+  {id:'gp_romhack',name:'ROM Hack Loader',type:'gameplay',desc:'Aceita hacks e DLCs .nes',enabled:true},
+];
+try{const savedMods=JSON.parse(localStorage.getItem('smb3hd_mods')||'null');if(Array.isArray(savedMods)){savedMods.forEach(sm=>{const m=MODS.find(x=>x.id===sm.id);if(m) m.enabled=!!sm.enabled})}}catch(e){}
+function saveMods(){try{localStorage.setItem('smb3hd_mods',JSON.stringify(MODS.map(m=>({id:m.id,enabled:m.enabled}))))}catch(e){}}
+function renderMods(){
+  const tex=$('#texPacks'), qol=$('#qolList'), list=$('#modsList');
+  tex.innerHTML=''; qol.innerHTML=''; list.innerHTML='';
+  MODS.forEach(m=>{
+    const card=document.createElement('div');
+    card.className='mod-card';
+    const on=S.modsEnabled && m.enabled;
+    const resTag=m.res?` · ${m.res}×`:'';
+    card.innerHTML=`<h4>${m.name}</h4><p>${m.desc} · ${m.type}${resTag}</p><div class="mod-actions"><button class="sm" data-toggle="${m.id}">${on?'Desativar':'Ativar'}</button></div>`;
+    card.querySelector('[data-toggle]').onclick=()=>{
+      m.enabled=!m.enabled;
+      if(m.id==='gp_widescreen'){S.widescreen=m.enabled;saveS()}
+      if(m.id==='qol_bags'){S.bagsOn=m.enabled;saveS()}
+      if(m.id==='tex_crt'&&m.enabled){S.filtro='crt';saveS()}
+      saveMods();renderMods();apply();
+    };
+    if(m.type==='texture') tex.appendChild(card);
+    else if(m.type==='qol') qol.appendChild(card);
+    else list.appendChild(card);
+  });
+}
+
+const OPT=[
+  {g:'Imagem',items:[
+    {id:'widescreen',t:'sw',l:'Widescreen',h:'Escala 16:9 sem esticar (barras pretas)'},
+    {id:'filtro',t:'sel',l:'Filtro',h:'Nítido = pixels definidos',v:[['nitido','Nítido'],['suave','Suave'],['crt','CRT']],d:'nitido'},
+    {id:'tamanho',t:'sel',l:'Tamanho',h:'Pixels inteiros evita distorção',v:[['ajustar','Ajustar'],['inteiro','Pixels inteiros']],d:'ajustar'},
+    {id:'brilho',t:'sl',l:'Brilho',min:50,max:150,step:5,u:'%',d:100},
+  ]},
+  {g:'Som',items:[{id:'volume',t:'sl',l:'Volume',min:0,max:100,step:10,u:'%',d:80}]},
+  {g:'Controles',items:[
+    {id:'controller',t:'sel',l:'Tipo de controle',h:'PS4 / DualShock, Xbox ou Auto',v:[['ps4','PS4 / DualShock'],['xbox','Xbox'],['auto','Auto']],d:'ps4'},
+  ]},
+  {g:'Mods & QoL',items:[
+    {id:'modsEnabled',t:'sw',l:'Ativar mods',h:'Liga/desliga todos os mods'},
+    {id:'bagsOn',t:'sw',l:'Coin Bags',h:'Ganha moeda vermelha e azul a cada fase'},
+  ]},
+  {g:'Interface',items:[{id:'fps',t:'sw',l:'Mostrar FPS',d:false}]},
+];
+function buildOpts(){
+  const box=$('#optBox'); box.innerHTML='';
+  for(const g of OPT){
+    const sec=document.createElement('div'); sec.className='grp';
+    sec.appendChild(Object.assign(document.createElement('h3'),{textContent:g.g}));
+    for(const it of g.items){
+      const row=document.createElement('div'); row.className='orow';
+      const lab=document.createElement('div'); lab.className='lab';
+      lab.innerHTML=`<b>${it.l}</b>${it.h?`<small>${it.h}</small>`:''}`;
+      row.appendChild(lab);
+      let c;
+      if(it.t==='sel'){
+        c=document.createElement('div'); c.className='seg';
+        for(const[v,n] of it.v){
+          const b=document.createElement('button'); b.type='button'; b.textContent=n;
+          b.setAttribute('aria-pressed',S[it.id]===v);
+          b.onclick=()=>{S[it.id]=v;saveS();apply();[...c.children].forEach(x=>x.setAttribute('aria-pressed',x===b))};
+          c.appendChild(b);
+        }
+      }else if(it.t==='sl'){
+        c=document.createElement('div'); c.className='sl';
+        const r=document.createElement('input'); r.type='range'; r.min=it.min;r.max=it.max;r.step=it.step;r.value=S[it.id];
+        const o=document.createElement('output'); o.textContent=S[it.id]+it.u;
+        r.oninput=()=>{S[it.id]=+r.value;o.textContent=r.value+it.u;saveS();apply()};
+        c.append(r,o);
+      }else{
+        c=document.createElement('button'); c.className='sw'; c.type='button';
+        c.setAttribute('role','switch'); c.setAttribute('aria-checked',!!S[it.id]);
+        c.onclick=()=>{S[it.id]=!S[it.id];c.setAttribute('aria-checked',!!S[it.id]);saveS();apply();if(it.id==='modsEnabled'||it.id==='bagsOn')renderMods()};
+      }
+      row.appendChild(c); sec.appendChild(row);
+    }
+    box.appendChild(sec);
+  }
+  /* Mapeamento de botões do controle */
+  const mapSec=document.createElement('div'); mapSec.className='grp';
+  mapSec.innerHTML='<h3>Mapeamento do controle</h3><p style="margin:0 0 8px;font-size:12px;opacity:.7">Índices Gamepad API (PS4: 0=X 1=O 8=Share 9=Options). Clique e pressione um botão no controle para capturar.</p>';
+  const mapBox=document.createElement('div'); mapBox.className='compile-grid';
+  const labels={a:'A (pulo)',b:'B (correr)',select:'Select',start:'Start',up:'Cima',down:'Baixo',left:'Esq',right:'Dir'};
+  Object.keys(labels).forEach(key=>{
+    const row=document.createElement('div'); row.className='orow'; row.style.borderTop='1px solid rgba(255,255,255,.12)';
+    row.innerHTML='<div class="lab"><b>'+labels[key]+'</b><small>botão #'+ (S.padMap[key]??'?') +'</small></div>';
+    const btn=document.createElement('button'); btn.className='sm'; btn.textContent='Mapear';
+    btn.onclick=()=>{
+      btn.textContent='...';
+      const t0=performance.now();
+      const iv=setInterval(()=>{
+        const pads=navigator.getGamepads&&navigator.getGamepads();
+        if(pads){
+          for(const g of pads){
+            if(!g) continue;
+            for(let i=0;i<g.buttons.length;i++){
+              if(g.buttons[i]&&(g.buttons[i].pressed||g.buttons[i].value>0.5)){
+                S.padMap[key]=i; saveS(); clearInterval(iv); buildOpts(); apply(); return;
+              }
+            }
+          }
+        }
+        if(performance.now()-t0>4000){ clearInterval(iv); btn.textContent='Mapear'; }
+      },50);
+    };
+    row.appendChild(btn); mapBox.appendChild(row);
+  });
+  mapSec.appendChild(mapBox);
+  const rst=document.createElement('button'); rst.className='sm'; rst.textContent='Resetar mapeamento PS4'; rst.style.marginTop='10px';
+  rst.onclick=()=>{S.padMap=Object.assign({},DEFAULTS.padMap);S.controller='ps4';saveS();buildOpts();};
+  mapSec.appendChild(rst);
+  box.appendChild(mapSec);
+}
+
+function genModJSON(){
+  const obj={name:$('#modName').value.trim()||'Meu Mod',type:$('#modType').value,author:$('#modAuthor').value.trim()||'Anônimo',description:$('#modDesc').value.trim()||'',version:$('#modVer').value.trim()||'1.0.0',created:new Date().toISOString().slice(0,10),enabled:true,assets:[]};
+  const json=JSON.stringify(obj,null,2);
+  const out=$('#modOut'); out.hidden=false; out.textContent=json;
+  return json;
+}
+$('#bGenMod').onclick=genModJSON;
+$('#bCopyMod').onclick=()=>{const j=genModJSON();navigator.clipboard?.writeText(j).then(()=>alert('Copiado!'))};
+$('#bDlMod').onclick=()=>{const j=genModJSON();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download=($('#modName').value.trim()||'mod').replace(/\s+/g,'_').toLowerCase()+'.json';a.click()};
+
+/* Patreon dummy */
+
+/* ===== DLC / ROM Hack menu + Feedback ===== */
+let dlcRom=null;
+let dlcCustom=Object.assign({
+  name:'ROM Hack', sub:'Community Edition', desc:'Carregue um hack ou DLC .nes para jogar',
+  col1:'#2860c8', col2:'#5030a0', border:'#a0c8ff'
+}, JSON.parse(localStorage.getItem('smb3hd_dlc_custom')||'{}'));
+
+function applyDlcTheme(){
+  const pan=$('#dlcPanel');
+  if(!pan) return;
+  pan.style.setProperty('--dlc-bg1', hexToRgba(dlcCustom.col1,0.55));
+  pan.style.setProperty('--dlc-bg2', hexToRgba(dlcCustom.col2,0.5));
+  pan.style.setProperty('--dlc-border', hexToRgba(dlcCustom.border,0.45));
+  const t=$('#dlcTitle'); if(t) t.innerHTML=(dlcCustom.name||'ROM Hack')+'<span id="dlcSubtitle">'+(dlcCustom.sub||'')+'</span>';
+  const d=$('#dlcDesc'); if(d) d.textContent=dlcCustom.desc||'';
+}
+function hexToRgba(hex,a){
+  const h=(hex||'#4488ff').replace('#','');
+  const full=h.length===3?h.split('').map(c=>c+c).join(''):h;
+  const n=parseInt(full,16);
+  return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')';
+}
+function updDlcChip(){
+  const chip=$('#dlcChip'), ps=$('#dlcPlayS');
+  if(!chip) return;
+  if(!dlcRom){
+    chip.className='chip'; chip.textContent='Nenhum ROM hack';
+    if(ps) ps.textContent='Nenhum hack carregado';
+  }else{
+    chip.className='chip '+(dlcRom.isHack?'warn':'ok');
+    chip.textContent=(dlcRom.isHack?'✦ ROM Hack / DLC':'✓ ROM')+' · mapper '+(dlcRom.mapper||'?')+' · CRC '+dlcRom.crc.toString(16).toUpperCase();
+    if(ps) ps.textContent='Pronto para jogar';
+  }
+}
+function openDlcFlow(){
+  applyDlcTheme();
+  updDlcChip();
+  if(!dlcRom){
+    /* sem ROM hack → janela de customização */
+    openCustomModal(true);
+  }else{
+    show('dlc');
+  }
+}
+function openCustomModal(force){
+  $('#cName').value=dlcCustom.name||'';
+  $('#cSub').value=dlcCustom.sub||'';
+  $('#cDesc').value=dlcCustom.desc||'';
+  $('#cCol1').value=dlcCustom.col1||'#2860c8';
+  $('#cCol2').value=dlcCustom.col2||'#5030a0';
+  $('#cColB').value=dlcCustom.border||'#a0c8ff';
+  $('#modalCustom').hidden=false;
+}
+function saveCustom(){
+  dlcCustom={
+    name:$('#cName').value.trim()||'ROM Hack',
+    sub:$('#cSub').value.trim()||'Community Edition',
+    desc:$('#cDesc').value.trim()||'',
+    col1:$('#cCol1').value, col2:$('#cCol2').value, border:$('#cColB').value
+  };
+  try{localStorage.setItem('smb3hd_dlc_custom',JSON.stringify(dlcCustom))}catch(e){}
+  applyDlcTheme();
+  $('#modalCustom').hidden=true;
+  show('dlc');
+  updDlcChip();
+}
+async function loadDlcFile(file){
+  try{
+    const buf=await file.arrayBuffer();
+    dlcRom=parseRom(buf);
+    dlcRom.isHack=true; /* tratado como DLC/hack neste menu */
+    try{await idbOp('readwrite',s=>s.put(buf,'dlc_rom'))}catch(e){}
+    updDlcChip();
+    const m=$('#dlcMsg'); if(m) m.textContent='Hack carregado. Pode jogar!';
+    $('#modalCustom').hidden=true;
+    show('dlc');
+  }catch(e){
+    alert(e.message);
+  }
+}
+function playDlc(){
+  if(!dlcRom){
+    openCustomModal(true);
+    return;
+  }
+  rom=dlcRom; saved=true; updRom();
+  play();
+}
+
+$('#bDlcCorner').onclick=openDlcFlow;
+$('#dlcBack').onclick=()=>show('home');
+$('#dlcCustom').onclick=()=>openCustomModal(false);
+$('#dlcLoad').onclick=()=>$('#dlcFile').click();
+$('#dlcFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)loadDlcFile(f)};
+$('#dlcPlay').onclick=playDlc;
+$('#cSave').onclick=saveCustom;
+$('#cClose').onclick=()=>{$('#modalCustom').hidden=true; if(dlcRom) show('dlc');};
+$('#cLoadRom').onclick=()=>$('#dlcFile').click();
+
+/* Feedback */
+$('#bFeedback').onclick=()=>{$('#fbText').value='';$('#fbMsg').textContent='';$('#modalFeedback').hidden=false};
+$('#fbClose').onclick=()=>{$('#modalFeedback').hidden=true};
+$('#fbSend').onclick=()=>{
+  const txt=$('#fbText').value.trim();
+  if(!txt){$('#fbMsg').textContent='Escreve alguma coisa :)';return}
+  try{
+    const list=JSON.parse(localStorage.getItem('smb3hd_feedback')||'[]');
+    list.push({when:new Date().toISOString(),text:txt});
+    localStorage.setItem('smb3hd_feedback',JSON.stringify(list.slice(-50)));
+  }catch(e){}
+  $('#fbMsg').textContent='Valeu! Feedback salvo localmente.';
+  setTimeout(()=>{$('#modalFeedback').hidden=true},900);
+};
+
+/* restore dlc rom from idb */
+(async()=>{
+  try{
+    const buf=await idbOp('readonly',s=>s.get('dlc_rom'));
+    if(buf){ dlcRom=parseRom(buf); dlcRom.isHack=true; }
+  }catch(e){}
+  applyDlcTheme();
+})();
+
+
+function patreonDummy(){alert('Patreon em breve!\n\nPor enquanto este botão é só um placeholder.\nObrigado pelo interesse em apoiar o projeto 💛')}
+$('#bPatreon').onclick=patreonDummy;
+$('#bPatreon2').onclick=patreonDummy;
+
+/* ROM */
+const idb=()=>new Promise((res,rej)=>{const q=indexedDB.open('smb3hd',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+const idbOp=async(mode,fn)=>{const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction('k',mode),r=fn(tx.objectStore('k'));tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error)})};
+let rom=null,saved=true;
+function msg(t,e){
+  for(const id of ['msg','msgOpt']){
+    const el=$( '#'+id );
+    if(!el) continue;
+    el.textContent=t||'';
+    el.className=e?'err':'';
+    if(e) el.style.color='#ff7a9a'; else el.style.color='';
+  }
+}
+function setChip(el, has){
+  if(!el) return;
+  if(!has){el.className='chip';el.textContent='Nenhuma ROM carregada'}
+  else if(rom.crc===KNOWN && rom.mapper===4){el.className='chip ok';el.textContent='✓ SMB3 (USA)'+(saved?' · guardada':'')}
+  else if(rom.isHack){el.className='chip warn';el.textContent='✦ ROM Hack / DLC · mapper '+rom.mapper+' · CRC '+rom.crc.toString(16).toUpperCase()+(saved?' · guardada':'')}
+  else{el.className='chip warn';el.textContent='ROM alt (CRC '+rom.crc.toString(16).toUpperCase()+')'+(saved?' · guardada':'')}
+}
+function updRom(){
+  const has=!!rom;
+  $('#playT').textContent=has?'Jogar':'Escolher ROM';
+  const ch=characters.find(c=>c.id===S.character);
+  $('#playS').textContent=has?`Personagem: ${ch?.name||'Mario'}`:'Para começar, escolha a sua ROM';
+  const del=$('#bDel'); if(del) del.hidden=!has;
+  /* Na tela de título: mostra leitor só se NÃO tiver ROM (primeira vez / espaço vazio) */
+  const homeRom=$('#homeRom');
+  if(homeRom) homeRom.hidden=has;
+  setChip($('#chip'), has);
+  setChip($('#chipOpt'), has);
+}
+async function useFile(file){
+  try{
+    const buf=await file.arrayBuffer();
+    rom=parseRom(buf);saved=true;
+    try{await idbOp('readwrite',s=>s.put(buf,'rom'))}catch(e){saved=false;msg('Não deu pra guardar a ROM; vale só até fechar a página.',1)}
+    updRom();
+    if(saved)msg('ROM pronta. Clique em Jogar.');
+  }catch(e){msg(e.message,1)}
+}
+
+let prev='home';
+const views=['home','opt','mods','cred','chars','game','compile','dlc'];
+const show=n=>{for(const v of views){const el=$('#v-'+v);if(el) el.hidden=v!==n} if(n==='game') fit()};
+
+/* Pause geo shapes */
+function spawnGeo(containerId, count){
+  const bg=document.getElementById(containerId);
+  if(!bg) return;
+  bg.innerHTML='';
+  const types=['t','c','d'];
+  for(let i=0;i<count;i++){
+    const g=document.createElement('div');
+    g.className='geo '+types[i%3];
+    g.style.left=(Math.random()*92)+'%';
+    g.style.top=(Math.random()*92)+'%';
+    g.style.animationDuration=(10+Math.random()*18)+'s';
+    g.style.animationDelay=(Math.random()*10)+'s';
+    const sc=0.6+Math.random()*0.9;
+    g.style.transform='scale('+sc+')';
+    bg.appendChild(g);
+  }
+}
+function buildPauseGeo(){ spawnGeo('pauseGeo', 14); }
+function buildMenuGeo(){ spawnGeo('menuGeo', 16); }
+
+/* Game */
+let nes=null,ac=null,gain=null,spn=null,cur=null,pos=0,q=[],run=false,paused=false,last=0,acc=0,keys=0,fc=0,ft=0,ctx,img,u32;
+let hudScore=0,hudLives=3;
+
+function paletteFilter(){
+  /* Expande percepção de cor no canvas via CSS filter (não altera ROM) */
+  const b=S.brilho/100;
+  if(S.palette==='rich') return 'brightness('+b+') saturate(1.35) contrast(1.08)';
+  if(S.palette==='cinema') return 'brightness('+b+') saturate(1.15) contrast(1.12) hue-rotate(-4deg)';
+  if(S.palette==='hq') return 'brightness('+b+') saturate(1.2) contrast(1.05) blur(0.15px)';
+  return 'brightness('+b+')';
+}
+function apply(){
+  const cv=$('#cv');
+  cv.className=S.filtro==='suave'?'suave':'';
+  $('#stage').classList.toggle('crt',S.filtro==='crt');
+  $('#wideBadge').hidden=!S.widescreen;
+  cv.style.filter=paletteFilter();
+  /* textura HQ: image-rendering */
+  if(S.texScale>=64){ cv.style.imageRendering='auto'; }
+  else { cv.style.imageRendering=S.filtro==='suave'?'auto':'pixelated'; }
+  $('#fps').hidden=!S.fps;
+  if(gain) gain.gain.value=S.volume/100*2;
+  fit();
+  updatePalStrip();
+}
+function fit(){
+  const st=$('#stage'),w=st.clientWidth,h=st.clientHeight;
+  if(!w||!h) return;
+  const srcW=256, srcH=240;
+  const cv=$('#cv');
+  if(S.widescreen){
+    /* Widescreen suave: só ~8–12% mais largo (menos notável, mais jogável) */
+    const stretch = 1.10; /* antes era ~1.2+ até 16:9 cheio */
+    let k=Math.min(w/(srcW*stretch), h/srcH);
+    if(S.tamanho==='inteiro') k=Math.max(1, Math.floor(k));
+    cv.style.width=Math.round(srcW*k*stretch)+'px';
+    cv.style.height=Math.round(srcH*k)+'px';
+  }else{
+    let k=Math.min(w/srcW, h/srcH);
+    if(S.tamanho==='inteiro') k=Math.max(1,Math.floor(k));
+    cv.style.width=Math.round(srcW*k)+'px';
+    cv.style.height=Math.round(srcH*k)+'px';
+  }
+  $('#stage').classList.toggle('wide', !!S.widescreen);
+}
+addEventListener('resize',fit);
+
+function initAudio(){
+  try{
+    if(!ac){
+      ac=new(window.AudioContext||window.webkitAudioContext)();
+      gain=ac.createGain();
+      spn=ac.createScriptProcessor(2048,0,1);
+      spn.onaudioprocess=e=>{
+        const o=e.outputBuffer.getChannelData(0); let i=0;
+        while(i<o.length){if(!cur||pos>=cur.length){cur=q.shift();pos=0;if(!cur)break}const n=Math.min(o.length-i,cur.length-pos);o.set(cur.subarray(pos,pos+n),i);i+=n;pos+=n}
+        o.fill(0,i);
+      };
+      spn.connect(gain); gain.connect(ac.destination);
+    }
+    if(ac.resume) ac.resume();
+    apply();
+  }catch(e){ac=null}
+}
+
+function newGame(){
+  nes=createNES(rom.prg,rom.chr,rom.vert);q=[];cur=null;keys=0;
+  hudScore=0; hudLives=3;
+  const hs=$('#hudScore'), hl=$('#hudLives');
+  if(hs) hs.textContent='000000';
+  if(hl) hl.textContent='× '+hudLives;
+  updateHudBags();
+}
+function play(){
+  if(!rom){$('#file').click();return}
+  ctx=$('#cv').getContext('2d');
+  img=ctx.createImageData(256,240);
+  u32=new Uint32Array(img.data.buffer);
+  newGame(); initAudio(); show('game');
+  paused=false; $('#pause').hidden=true; $('#secret').hidden=true; apply();
+  if(!run){run=true;last=performance.now();acc=0;requestAnimationFrame(loop)}
+}
+
+const KM={ArrowUp:16,ArrowDown:32,ArrowLeft:64,ArrowRight:128,KeyW:16,KeyS:32,KeyA:64,KeyD:128,KeyX:1,KeyK:1,Space:1,KeyZ:2,KeyJ:2,Enter:8,ShiftLeft:4,ShiftRight:4,Backspace:4};
+addEventListener('keydown',e=>{
+  if($('#v-game').hidden) return;
+  if(e.code==='Escape'){e.preventDefault();if(!$('#secret').hidden){$('#secret').hidden=true;return}paused?resume():pause();return}
+  const b=KM[e.code]; if(b){keys|=b;e.preventDefault()}
+});
+addEventListener('keyup',e=>{const b=KM[e.code];if(b)keys&=~b});
+addEventListener('blur',()=>{keys=0});
+
+document.querySelectorAll('.touchBtn').forEach(btn=>{
+  const k=+btn.dataset.k;
+  const down=e=>{e.preventDefault();keys|=k;btn.setPointerCapture?.(e.pointerId)};
+  const up=e=>{e.preventDefault();keys&=~k};
+  btn.addEventListener('pointerdown',down);
+  btn.addEventListener('pointerup',up);
+  btn.addEventListener('pointercancel',up);
+  btn.addEventListener('pointerleave',e=>{if(e.buttons===0)up(e)});
+});
+
+function pad(){
+  let p=keys;
+  try{
+    const pads=navigator.getGamepads&&navigator.getGamepads();
+    if(!pads) return p;
+    let g=null;
+    for(let i=0;i<pads.length;i++){ if(pads[i]){ g=pads[i]; break; } }
+    if(!g) return p;
+    const b=i=>g.buttons[i]&&(g.buttons[i].pressed||g.buttons[i].value>0.4);
+    const mode=S.controller||'ps4';
+    /* PS4 DualShock (Chrome): 0=X(A) 1=O(B) 2=□ 3=△ 8=Share 9=Options 12-15 D-pad */
+    /* Xbox: 0=A 1=B 2=X 3=Y 8=Back 9=Start */
+    const map = S.padMap || {a:0,b:1,select:8,start:9,up:12,down:13,left:14,right:15};
+    let ai=map.a, bi=map.b, sei=map.select, sti=map.start;
+    if(mode==='xbox'){ ai=0; bi=1; }
+    if(mode==='ps4'){ ai=0; bi=1; } /* X=A, O=B estilo Mario */
+    if(b(ai)||b(2)) p|=1;  /* A / □ também como A opcional */
+    if(b(bi)||b(3)) p|=2;  /* B / △ */
+    if(b(sei)) p|=4;
+    if(b(sti)) p|=8;
+    if(b(map.up)||g.axes[1]<-.45) p|=16;
+    if(b(map.down)||g.axes[1]>.45) p|=32;
+    if(b(map.left)||g.axes[0]<-.45) p|=64;
+    if(b(map.right)||g.axes[0]>.45) p|=128;
+    /* sticks L2/R2 como B/A em alguns layouts */
+    if(g.buttons[6]&&g.buttons[6].value>0.5) p|=2;
+    if(g.buttons[7]&&g.buttons[7].value>0.5) p|=1;
+  }catch(e){}
+  return p;
+}
+
+function loop(ts){
+  if(!run) return;
+  requestAnimationFrame(loop);
+  if(paused||$('#v-game').hidden){last=ts;return}
+  let dt=ts-last; last=ts; if(dt>100)dt=100; acc+=dt; let n=0;
+  while(acc>=16.64&&n<4){
+    nes.pad[0]=pad(); nes.frame();
+    if(ac){q.push(nes.gen(Math.round(ac.sampleRate/60),ac.sampleRate));while(q.length>8)q.shift()}
+    acc-=16.64; n++; fc++;
+    /* simula score HUD estilo New SMB */
+    /* HUD NewSMB removido — score interno só se elemento existir */
+    if(n&&S.modsEnabled){hudScore=(hudScore+10)%1000000;const hs=$('#hudScore');if(hs)hs.textContent=String(hudScore).padStart(6,'0')}
+  }
+  if(n){u32.set(nes.fb);ctx.putImageData(img,0,0)}
+  if(ts-ft>=1000){if(S.fps)$('#fps').textContent=Math.round(fc*1000/(ts-ft))+' FPS';fc=0;ft=ts}
+}
+
+function pause(){paused=true;$('#pause').hidden=false;buildPauseGeo();updateHudBags();refreshSaveInfo();if(ac&&ac.suspend)ac.suspend()}
+function resume(){paused=false;$('#pause').hidden=true;keys=0;if(ac&&ac.resume)ac.resume()}
+function quit(){run=false;paused=false;if(ac&&ac.suspend)ac.suspend();show('home')}
+
+
+/* ===== Compilador / desmontador integrado ===== */
+function coLog(m){
+  const el=$('#coLog'); if(!el) return;
+  const d=document.createElement('div');
+  d.textContent='['+new Date().toLocaleTimeString()+'] '+m;
+  el.prepend(d);
+}
+let compileMeta=null;
+
+function mastigaText(meta){
+  return `REESCRITA HTML DO JOGO (ROM MASTIGADA)
+══════════════════════════════════════
+A ROM não é “emulada por fora”: ela é diluída
+e vira o próprio jogo em HTML/JS.
+
+MAPA ROM → HTML
+────────────────
+PRG (${meta.prgBanks}×16KB)  →  motor 6502 em JS (lógica do jogo)
+CHR (${meta.chrBanks}×8KB)   →  tiles no <canvas> (gráficos)
+MMC3 mapper ${meta.mapper}   →  troca de bancos em JS
+Nametable ${meta.vert?'V':'H'}     →  scroll / câmera no frame
+CRC 0x${meta.crc.toString(16).toUpperCase()}     →  identidade da build
+
+CONTROLES TRADUZIDOS (HTML)
+───────────────────────────
+Setas / WASD     →  pad bits ↑↓←→  (P1)
+X / K / Espaço   →  botão A (pulo)
+Z / J            →  botão B (correr / fogo)
+Enter            →  Start
+Shift / Backspace→  Select
+Esc              →  Pause (menu HTML)
+Touch / Gamepad  →  mesmos bits do pad
+
+LOOP DO JOGO REFEITO EM HTML
+────────────────────────────
+requestAnimationFrame
+  → nes.frame()        // 1 frame SMB3
+  → canvas.putImageData
+  → áudio APU
+  → hooks de mod (bags, wide, tex ${S.texScale}×)
+
+Isso É a versão HTML: a ROM mastigada alimenta
+o runtime; os controles e a tela são nativos web.`;
+}
+
+function updatePalStrip(){
+  const strip=$('#palStrip'); if(!strip) return;
+  strip.innerHTML='';
+  /* mostra 32 primeiras cores NES */
+  for(let i=0;i<32;i++){
+    const c=NES_PAL32[i];
+    const r=(c>>16)&255,g=(c>>8)&255,b=c&255;
+    const el=document.createElement('i');
+    el.style.background=`rgb(${r},${g},${b})`;
+    el.title='NES $'+i.toString(16);
+    strip.appendChild(el);
+  }
+}
+
+function renderCoChr(chr, n=32){
+  const box=$('#coChrPrev'); if(!box) return;
+  box.innerHTML='';
+  if(!chr||!chr.length) return;
+  const scale = S.texScale>=128 ? 6 : S.texScale>=64 ? 5 : 4;
+  for(let tile=0; tile<Math.min(n, chr.length>>4); tile++){
+    const c=document.createElement('canvas');
+    c.width=8*scale; c.height=8*scale;
+    const ctx=c.getContext('2d');
+    const tmp=document.createElement('canvas'); tmp.width=8; tmp.height=8;
+    const tctx=tmp.getContext('2d');
+    const img=tctx.createImageData(8,8);
+    const base=tile*16;
+    for(let y=0;y<8;y++){
+      const lo=chr[base+y], hi=chr[base+8+y];
+      for(let x=0;x<8;x++){
+        const bit=7-x;
+        const v=((lo>>bit)&1)|(((hi>>bit)&1)<<1);
+        const i=(y*8+x)*4;
+        const g=v===0?16:v===1?80:v===2?150:230;
+        img.data[i]=img.data[i+1]=img.data[i+2]=g; img.data[i+3]=255;
+      }
+    }
+    tctx.putImageData(img,0,0);
+    ctx.imageSmoothingEnabled = S.texScale>=128;
+    ctx.drawImage(tmp,0,0,8*scale,8*scale);
+    box.appendChild(c);
+  }
+}
+
+function analyzeRomBuf(buf){
+  const meta=parseRom(buf);
+  /* parseRom returns prg,chr,vert,crc — extend */
+  const f=new Uint8Array(buf);
+  const tr=f[6]&4?512:0;
+  meta.prgBanks=f[4]; meta.chrBanks=f[5];
+  meta.mapper=(f[6]>>4)|(f[7]&0xF0);
+  meta.trainer=tr;
+  compileMeta=meta;
+  $('#coStatus').className='chip ok';
+  $('#coStatus').textContent='ROM desmontada · mapper '+meta.mapper;
+  $('#coStats').hidden=false;
+  $('#coPrg').textContent=meta.prgBanks;
+  $('#coChr').textContent=((meta.chr.length)>>4)+' tiles';
+  $('#coMap').textContent=meta.mapper+(meta.mapper===4?' MMC3':'');
+  $('#coCrc').textContent=meta.crc.toString(16).toUpperCase();
+  $('#coMastiga').textContent=mastigaText(meta);
+  renderCoChr(meta.chr);
+  updatePalStrip();
+  coLog('ROM mastigada: PRG '+meta.prgBanks+' · CHR tiles '+(meta.chr.length>>4)+' · CRC '+meta.crc.toString(16));
+  return meta;
+}
+
+async function coUseLauncherRom(){
+  if(!rom){ coLog('Nenhuma ROM no launcher. Escolha uma.'); alert('Carregue uma ROM no launcher primeiro (ou escolha outra aqui).'); return; }
+  try{
+    const buf=await idbOp('readonly',s=>s.get('rom'));
+    if(!buf){ coLog('ROM em memória sem buffer IDB — reescolha o arquivo.'); return; }
+    analyzeRomBuf(buf);
+  }catch(e){ coLog('Erro: '+e.message); }
+}
+
+function buildCompilePack(){
+  if(!compileMeta) throw Error('Desmonte uma ROM primeiro');
+  return {
+    format:'smb3-html-compile-v1',
+    note:'Pack compilado no launcher. Não contém a ROM.',
+    rom:{
+      mapper:compileMeta.mapper,
+      prgBanks:compileMeta.prgBanks,
+      chrBanks:compileMeta.chrBanks,
+      chrTiles:compileMeta.chr.length>>4,
+      crc32:'0x'+compileMeta.crc.toString(16).toUpperCase(),
+      mirroring:compileMeta.vert?'vertical':'horizontal'
+    },
+    htmlRuntime:{
+      cpu:'6502-js',
+      ppu:'scanline-canvas',
+      apu:'scriptprocessor',
+      display:'canvas-256x240'
+    },
+    palette:{mode:S.palette, nesColors:64, expanded:S.palette!=='native'},
+    textures:{scale:S.texScale, mode:S.texScale===1?'native':(S.texScale+'x-hq')},
+    hooks:{
+      widescreen:!!S.widescreen,
+      coinBags:!!S.bagsOn,
+      htmlControls:true,
+      textureHq:S.texScale>1,
+      paletteExpand:S.palette!=='native'
+    },
+    translation:mastigaText(compileMeta),
+    created:new Date().toISOString()
+  };
+}
+
+$('#coUseRom').onclick=coUseLauncherRom;
+$('#coPick').onclick=()=>$('#coFile').click();
+$('#coFile').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value='';
+  if(!f) return;
+  try{ analyzeRomBuf(await f.arrayBuffer()); }
+  catch(err){ $('#coStatus').className='chip warn'; $('#coStatus').textContent=err.message; coLog(err.message); }
+};
+document.querySelectorAll('[data-pal]').forEach(btn=>{
+  btn.onclick=()=>{ S.palette=btn.getAttribute('data-pal'); saveS(); apply(); if(compileMeta) $('#coMastiga').textContent=mastigaText(compileMeta); coLog('Paleta: '+S.palette); };
+});
+document.querySelectorAll('[data-tex]').forEach(btn=>{
+  btn.onclick=()=>{ S.texScale=+btn.getAttribute('data-tex'); saveS(); apply(); if(compileMeta){ renderCoChr(compileMeta.chr); $('#coMastiga').textContent=mastigaText(compileMeta);} coLog('Textura HQ: '+S.texScale+'×'); };
+});
+$('#coBuild').onclick=()=>{
+  try{
+    const pack=buildCompilePack();
+    const json=JSON.stringify(pack,null,2);
+    const out=$('#coOut'); out.hidden=false; out.textContent=json;
+    coLog('Pack compilado');
+  }catch(e){ coLog(e.message); alert(e.message); }
+};
+$('#coCopy').onclick=()=>{
+  try{ const j=JSON.stringify(buildCompilePack(),null,2); navigator.clipboard?.writeText(j).then(()=>coLog('Copiado')); $('#coOut').hidden=false; $('#coOut').textContent=j; }
+  catch(e){ alert(e.message); }
+};
+$('#coDl').onclick=()=>{
+  try{
+    const j=JSON.stringify(buildCompilePack(),null,2);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([j],{type:'application/json'})); a.download='smb3-compile-pack.json'; a.click();
+    coLog('Download ok');
+  }catch(e){ alert(e.message); }
+};
+$('#coApply').onclick=()=>{
+  apply();
+  coLog('Aplicado: paleta='+S.palette+' tex='+S.texScale+'× wide='+!!S.widescreen);
+  alert('Configuração aplicada!\nPaleta: '+S.palette+'\nTexturas: '+S.texScale+'×\nWidescreen: '+(S.widescreen?'on':'off'));
+};
+$('#coPlay').onclick=()=>{
+  apply();
+  if(!rom && compileMeta){
+    alert('Use a mesma ROM no launcher (Opções) para jogar a build recompilada.');
+    return;
+  }
+  if(!rom){ alert('Carregue uma ROM antes.'); return; }
+  show('home');
+  play();
+  coLog('Jogando build HTML recompilada');
+};
+
+
+$('#bPlay').onclick=play;
+$('#bPause').onclick=pause;
+$('#pR').onclick=resume;
+$('#pQ').onclick=quit;
+$('#pX').onclick=()=>{newGame();resume()};
+
+/* ===== Save / Load state ===== */
+function saveSlotMeta(){
+  try{
+    const raw=localStorage.getItem('smb3hd_save_meta');
+    return raw?JSON.parse(raw):null;
+  }catch(e){return null}
+}
+function refreshSaveInfo(){
+  const m=saveSlotMeta();
+  const li=$('#loadInfo'), si=$('#saveInfo');
+  if(si) si.textContent=m?'Slot ok':'Slot local';
+  if(li) li.textContent=m?(m.when||'Disponível'):'Vazio';
+}
+function doSaveGame(){
+  if(!nes||!nes.getState){alert('Jogo não está rodando.');return}
+  try{
+    const state=nes.getState();
+    const payload={
+      when:new Date().toLocaleString('pt-BR'),
+      crc:rom&&rom.crc,
+      isHack:!!(rom&&rom.isHack),
+      character:S.character,
+      bags:Object.assign({},bags),
+      state
+    };
+    localStorage.setItem('smb3hd_save', JSON.stringify(payload));
+    localStorage.setItem('smb3hd_save_meta', JSON.stringify({when:payload.when,crc:payload.crc,isHack:payload.isHack}));
+    refreshSaveInfo();
+    alert('Jogo salvo!');
+  }catch(e){alert('Falha ao salvar: '+e.message)}
+}
+function doLoadGame(){
+  try{
+    const raw=localStorage.getItem('smb3hd_save');
+    if(!raw){alert('Nenhum save encontrado.');return}
+    const payload=JSON.parse(raw);
+    if(!nes){alert('Inicie o jogo antes de carregar.');return}
+    if(rom&&payload.crc&&payload.crc!==rom.crc){
+      if(!confirm('Save de outra ROM (hack/DLC diferente). Carregar mesmo assim?')) return;
+    }
+    nes.setState(payload.state);
+    if(payload.bags){ bags=payload.bags; saveBags(); updateHudBags(); }
+    refreshSaveInfo();
+    resume();
+    alert('Save carregado!');
+  }catch(e){alert('Falha ao carregar: '+e.message)}
+}
+
+
+$('#pSave').onclick=doSaveGame;
+$('#pLoad').onclick=doLoadGame;
+$('#pBags').onclick=()=>{grantStageCoins();updateHudBags()};
+
+$('#bOpt').onclick=()=>{prev='home';show('opt')};
+$('#pO').onclick=()=>{prev='game';show('opt')};
+$('#oBack').onclick=()=>show(prev);
+$('#bCred').onclick=()=>show('cred');
+$('#cBack').onclick=()=>show('home');
+$('#bMods').onclick=()=>{renderMods();show('mods')};
+$('#mBack').onclick=()=>show('home');
+$('#bCompile').onclick=()=>{show('compile');updatePalStrip();if(rom)coUseLauncherRom();};
+$('#bCompile2').onclick=()=>{show('compile');updatePalStrip();if(rom)coUseLauncherRom();};
+$('#coBack').onclick=()=>show('home');
+$('#bChars').onclick=()=>{renderChar();show('chars')};
+$('#chBack').onclick=()=>{updRom();show('home')};
+$('#bPick').onclick=()=>$('#file').click();
+$('#bPickOpt').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)useFile(f)};
+$('#bDel').onclick=async()=>{rom=null;try{await idbOp('readwrite',s=>s.delete('rom'))}catch(e){}updRom();msg('ROM removida.')};
+$('#bSecret').onclick=()=>{$('#secret').hidden=false};
+$('#secretClose').onclick=()=>{$('#secret').hidden=true};
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f&&!$('#v-home').hidden)useFile(f)});
+
+buildOpts();
+apply();
+updRom();
+updateHudBags();
+buildMenuGeo();
+(async()=>{try{const buf=await idbOp('readonly',s=>s.get('rom'));if(buf){rom=parseRom(buf);saved=true;updRom();msg('Sua ROM guardada foi encontrada.')}}catch(e){}})();
+</script>
+</body>
+</html>
